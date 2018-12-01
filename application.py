@@ -11,5 +11,5 @@ def home():
 	return render_template('temphome.html')
 
 @app.route("/newgame")
-def home():
+def newgame():
 	return render_template('newgame.html')
