@@ -24,6 +24,7 @@ pip3 install flask-cors
 
 5. To make sure flask starts in the development environment, type
 ```
+export FLASK_APP=application.py
 export FLASK_ENV=development
 ```
    in the api/v1.0/ directory
