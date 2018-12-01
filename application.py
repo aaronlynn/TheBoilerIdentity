@@ -9,3 +9,7 @@ def hello():
 @app.route("/home")
 def home():
 	return render_template('temphome.html')
+
+@app.route("/newgame")
+def home():
+	return render_template('newgame.html')
