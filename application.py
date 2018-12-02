@@ -1,6 +1,7 @@
 from flask import Flask
 from flask import render_template
 from flask import request
+import string
 import random
 import json
 from pusher import Pusher
@@ -21,11 +22,11 @@ def generateRoomId():
 	alph = 'ABCDEFGHIJKLMNOPQRSTUVWYZ'
 	returned = ''
 	for i in range(0, 4):
-		returned += alph[random.randint(0, 25)]
+		returned += random.choice(string.ascii_uppercase)
 	while returned in games:
 		returned = ''
 		for i in range(0, 4):
-			returned += alph[random.randint(0, 25)]
+			returned += random.choice(string.ascii_uppercase)
 	return returned
 
 @app.route("/")
