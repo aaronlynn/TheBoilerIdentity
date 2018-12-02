@@ -1,6 +1,7 @@
 from flask import Flask
 from flask import render_template
 from flask import request
+from flask import redirect
 import string
 import random
 import json
@@ -32,6 +33,16 @@ def generateRoomId():
 @app.route("/")
 @app.route("/home")
 def home():
+	if 'make' in request.args:
+		if 'name' not in request.args:
+			return render_template('index.html')
+		else:
+			return redirect('/newgame?name=' + request.args['name'])
+	if 'join' in request.args:
+		if 'name' not in request.args:
+			return render_template('index.html')
+		else:
+			return redirect('/joingame?name=' + request.args['name'])
 	return render_template('index.html')
 
 @app.route("/hello/<name>")
@@ -45,7 +56,7 @@ def newgame():
 	game = generateRoomId()
 
 	games[game] = {'players': [request.args['name']], 'owner': request.args['name']}
-	return render_template('lobby.html', game_id=game, game=json.dumps([request.args['name']]), is_owner=True)
+	return render_template('lobby.html', game_id=game, game=[request.args['name']], is_owner=True)
 
 @app.route("/lobby")
 def lobby():
@@ -54,18 +65,21 @@ def lobby():
 @app.route("/joingame")
 def joingame():
 	found_game = ''
-	if 'game' not in request.form or 'user' not in request.form:
+	if 'game' not in request.args and 'name' not in request.args:
 		return render_template('joingame.html', found_game='')
 
-	game = request.form['game']
-	username = request.form['user']
+	if 'name' in request.args and 'game' not in request.args:
+		return render_template('joingame.html', name=request.args['name'], found_game='')
+
+	game = request.args['game']
+	username = request.args['name']
 	if game in games:
 		if username in games[game]:
 			return render_template('joingame.html', found_game=username + ' already in game!')
 		else:
 			games[game]['players'].append(username)
 			pusher.trigger(game, 'join-game', {'user': username})
-			return render_template('lobby.html', game_id=game, game=json.dumps(games[game]), is_owner=False)
+			return render_template('lobby.html', game_id=game, game=games[game], is_owner=False)
 	return render_template('joingame.html', found_game=game + ' does not exist!')
 
 @app.route("/game")

@@ -26,14 +26,6 @@
         list.innerHTML += html;
       });
     </script>
-    <script>
-      var game = {{ game }};
-      console.log({{ game }});
-      let players = document.querySelector('#players');
-      game.players.forEach(player => {
-        players.innerHTML += `<li class="list-group-item">${player}</li>`;
-      });
-    </script>
   </head>
   <body>
     <h1>Waiting Lobby</h1>
@@ -42,6 +34,9 @@
       <div class="card-body">
         <h5 class="card-title">Players</h5>
         <ul id="players" class="list-group list-group-flush">
+          {% for player in game %}
+            <li class="list-group-item">{{ player }}</li>
+          {% endfor %}
         </ul>
       </div>
     </div>

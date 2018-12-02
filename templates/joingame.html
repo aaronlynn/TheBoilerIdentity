@@ -21,19 +21,28 @@
     <title>Join Game</title>
   </head>
   <body class="text-center default-form ">
+    {% if found_game != '' %}
+      <div class="alert alert-danger alert-dismissible fade show" role="alert">
+        <strong>Error</strong> {{ found_game }}
+        <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+          <span aria-hidden="true">&times;</span>
+        </button>
+      </div>
+    {% endif %}
     <!--
     <h1>Join Game</h1>
     <a href="/lobby">Join Room</a>
     <a href="/home">Back</a>
   -->
-    <form>
+    <form id="home-signin" action="/joingame" method="get">
       <h1 class="h3 mb-3">The Boiler Identity</h1>
       <div class="form-group">
-        <input type="text" id="inputGame" class="form-control" placeholder="Game Code">
+        <input type="text" id="inputGame" class="form-control" name="game" placeholder="Game Code">
+        <input type="hidden" name="name" value={{ name }}
       </div>
       <div class="form-row">
         <div class="form-group col-sm-6">
-          <button class="btn btn-lg btn-outline-secondary" type="submit">Back</button>
+          <button class="btn btn-lg btn-outline-secondary" href="/">Back</button>
         </div>
         <div class="form-group col-sm-6">
           <button class="btn btn-lg btn-outline-secondary" type="submit">Join</button>
