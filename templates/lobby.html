@@ -29,6 +29,7 @@
     </script>
     <script>
       var game = {{ game }};
+      console.log({{ game }});
       let players = document.querySelector('#players');
       game.players.forEach(player => {
         players.innerHTML += `<li class="list-group-item">${player}</li>`;
@@ -37,6 +38,7 @@
   </head>
   <body class="text-center default-form">
     <h1>Waiting Lobby</h1>
+    <h2>Lobby Code {{ game_id }}</h2>
     <div class="card">
       <div class="card-body">
         <h3 class="card-title">Players</h3>
@@ -51,7 +53,7 @@
       {% else %}
         <button type="button" class="btn btn-lg btn-outline-secondary" disabled>Start Game</button>
       {% endif %}
-      
+
     </div>
     </form>
 
