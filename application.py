@@ -46,6 +46,10 @@ def newgame():
 	games[game] = {'players': [request.args['name']], 'owner': request.args['name']}
 	return render_template('lobby.html', game_id=game, game=json.dumps([request.args['name']]), is_owner=True)
 
+@app.route("/lobby")
+def lobby():
+	return render_template('lobby.html')
+
 @app.route("/joingame")
 def joingame():
 	found_game = ''
