@@ -26,6 +26,10 @@
         let list = document.querySelector("#players");
         list.innerHTML += html;
       });
+
+      channel.bind('start-game', function eventHandler (data) {
+        window.location.replace("/game?game={{ game_id }}&user={{ player }}")
+      });
     </script>
   </head>
   <body class="text-center default-form">
@@ -45,7 +49,7 @@
       <div class="form-row">
         <div class="form-group col-sm-6">
           {% if is_owner %}
-            <button type="button" class="btn btn-lg btn-outline-secondary">Start Game</button>
+            <button type="button" class="btn btn-lg btn-primary" href="/startgame?game={{ game_id }}">Start Game</button>
           {% else %}
             <button type="button" class="btn btn-lg btn-outline-secondary" disabled>Start Game</button>
           {% endif %}

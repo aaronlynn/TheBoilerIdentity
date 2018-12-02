@@ -58,7 +58,7 @@ def newgame():
 	game = generateRoomId()
 
 	games[game] = {'players': {request.args['name']: ''}, 'owner': request.args['name']}
-	return render_template('lobby.html', game_id=game, game=[request.args['name']], is_owner=True)
+	return render_template('lobby.html', player=request.args['name'], game_id=game, game=games[game]['players'], is_owner=True)
 
 @app.route("/lobby")
 def lobby():
@@ -81,7 +81,7 @@ def joingame():
 		else:
 			games[game]['players'][username] = ''
 			pusher.trigger(game, 'join-game', {'user': username})
-			return render_template('lobby.html', game_id=game, game=games[game], is_owner=False)
+			return render_template('lobby.html', player=request.args['name'], game_id=game, game=games[game]['players'], is_owner=False)
 	return render_template('joingame.html', found_game=game + ' does not exist!')
 
 @app.route("/startgame")
@@ -101,6 +101,7 @@ def initgame():
 		del rolelist[role]
 		games[game]['players'][user] = role
 
+	pusher.trigger(game, 'start-game', {})
 
 @app.route("/game")
 def game():
