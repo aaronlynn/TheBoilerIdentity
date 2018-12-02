@@ -5,6 +5,7 @@ from flask import redirect
 from flask import url_for
 import json
 from pusher import Pusher
+from locations import *
 
 
 pusher = Pusher(
@@ -71,7 +72,7 @@ def joingame():
 @app.route("/game")
 def game():
 	if 'game' not in request.form or 'user' not in request.form:
-		return redirect('home')
+		return redirect(url_for('home')
 
 	game = request.args['game']
 	user = request.args['user']
