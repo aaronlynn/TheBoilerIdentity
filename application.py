@@ -1,7 +1,8 @@
 from flask import Flask
 from flask import render_template
 from flask import request
-import random
+from flask import redirect
+from flask import url_for
 import json
 from pusher import Pusher
 
@@ -69,7 +70,20 @@ def joingame():
 
 @app.route("/game")
 def game():
-	return render_template('game.html')
+	if 'game' not in request.form or 'user' not in request.form:
+		return redirect('home')
+
+	game = request.args['game']
+	user = request.args['user']
+	if game in games:
+		#TODO game logic goes here
+
+
+		return render_template('game.html')
+
+
+
+	return redirect(url_for('home'))
 
 @app.route("/pushertest/<name>")
 def pushertest(name):
