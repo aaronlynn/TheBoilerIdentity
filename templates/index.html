@@ -17,23 +17,24 @@
 
     <!-- Other Style Sheets -->
     <link  rel="stylesheet" type= "text/css" href="{{ url_for('static',filename='styles/master.css') }}">
+    <link  rel="stylesheet" type= "text/css" href="master.css">
 
   </head>
   <body class="text-center default-form">
-      <form id="home-signin" action="/newgame" method="get">
-        <h1 class="h3 mb-3">The Boiler Identity</h1>
-        <div class="form-group">
-          <input type="text" name="name" id="inputName" class="form-control" placeholder="Your Name" required autofocus>
+    <form action="/" method="get">
+      <h1 class="h3 mb-3">The Boiler Identity</h1>
+      <div class="form-group">
+        <input type="text" name="name" id="inputName" class="form-control" placeholder="Your Name" required autofocus>
+      </div>
+      <div class="form-row">
+        <div class="form-group col-sm-6">
+          <button class="btn btn-lg btn-outline-secondary" type="submit" name="make">Make Game</button>
         </div>
-        <div class="form-row">
-          <div class="form-group col-sm-6">
-            <button class="btn btn-lg btn-outline-secondary" type="submit">Make Game</button>
-          </div>
-          <div class="form-group col-sm-6">
-            <button class="btn btn-lg btn-outline-secondary" type="submit">Join Game</button>
-          </div>
+        <div class="form-group col-sm-6">
+          <button class="btn btn-lg btn-outline-secondary" type="submit" name="join">Join Game</button>
         </div>
-      </form>
-      <p class="mt-5 mb-3 text-muted">&copy; 2019</p>
+      </div>
+    </form>
+    <p class="mt-5 mb-3 text-muted">&copy; 2019</p>
   </body>
 </html>
