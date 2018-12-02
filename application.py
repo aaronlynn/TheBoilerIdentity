@@ -95,7 +95,7 @@ def game():
 	game = request.args['game']
 	user = request.args['user']
 	if game in games:
-		#TODO game logic goes here. Send location and role to player
+		#TODO game logic goes here. Send location and role to player. Start a clock?
 		
 		return render_template('game.html')
 
