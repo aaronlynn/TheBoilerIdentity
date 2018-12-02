@@ -36,6 +36,10 @@ def newgame():
 	games[request.form['game']] = {'players': [request.form['user']], 'owner': request.form['user']}
 	return render_template('lobby.html', game_id=request.form['game'], game=[request.form['user']], is_owner=True)
 
+@app.route("/lobby")
+def lobby():
+	return render_template('lobby.html')
+
 @app.route("/joingame")
 def joingame():
 	found_game = ''
