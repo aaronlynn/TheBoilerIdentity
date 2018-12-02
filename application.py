@@ -1,6 +1,7 @@
 from flask import Flask
 from flask import render_template
 from flask import request
+import json
 from pusher import Pusher
 
 
@@ -32,8 +33,8 @@ def newgame():
 	if request.form['game'] in games:
 		return render_template('newgame.html', response='Game already exists!')
 
-	games[request.form['game']] = [request.form['user']]
-	return render_template('lobby.html', game_id=request.form['game'], game=[request.form['user']])
+	games[request.form['game']] = {'players': [request.form['user']], 'owner': request.form['user']}
+	return render_template('lobby.html', game_id=request.form['game'], game=[request.form['user']], is_owner=True)
 
 @app.route("/joingame")
 def joingame():
@@ -42,14 +43,14 @@ def joingame():
 		return render_template('joingame.html', found_game='')
 
 	game = request.form['game']
-	username = request.args['user']
+	username = request.form['user']
 	if game in games:
 		if username in games[game]:
 			return render_template('joingame.html', found_game=username + ' already in game!')
 		else:
-			games[game].append(username)
+			games[game]['players'].append(username)
 			pusher.trigger(game, 'join-game', {'user': username})
-			return render_template('lobby.html', game_id=game, game=games[game])
+			return render_template('lobby.html', game_id=game, game=games[game], is_owner=False)
 	return render_template('joingame.html', found_game=game + ' does not exist!')
 
 @app.route("/game")

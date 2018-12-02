@@ -9,9 +9,49 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
 
     <title>Waiting Lobby</title>
+    <script src="https://js.pusher.com/4.3/pusher.min.js"></script>
+    <script>
+      // Enable pusher logging - don't include this in production
+      Pusher.logToConsole = true;
+
+      var pusher = new Pusher('63cda1f62b663027a43e', {
+        cluster: 'us2',
+        forceTLS: true
+      });
+
+
+
+      var channel = pusher.subscribe("{{ game_id|json }}");
+      channel.bind('join-game', function eventHandler (data) {
+        const html = `<li class="list-group-item">${data.user}</li>`;
+        let list = document.querySelector("#players");
+        list.innerHTML += html;
+      });
+    </script>
+    <script>
+      var game = {{ game|json }};
+      let players = document.querySelector('#players');
+      game.players.forEach(player => {
+        players.innerHTML += `<li class="list-group-item">${player}</li>`;
+      });
+    </script>
   </head>
   <body>
     <h1>Waiting Lobby</h1>
+
+    <div class="card">
+      <div class="card-body">
+        <h5 class="card-title">Players</h5>
+        <ul id="players" class="list-group list-group-flush">
+        </ul>
+      </div>
+    </div>
+
+    {% if is_owner %}
+      <button type="button" class="btn btn-primary">Start Game</button>
+    {% else %}
+      <button type="button" class="btn btn-primary" disabled>Start Game</button>
+    {% endif %}
     <a href="/game">Start Game</a>
     <a href="/home">Back</a>
 
