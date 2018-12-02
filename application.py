@@ -13,11 +13,12 @@ pusher = Pusher(
 )
 
 app = Flask(__name__)
+games = {}
 
 @app.route("/")
 @app.route("/home")
 def home():
-	return render_template('temphome.html')
+	return render_template('index.html')
 
 @app.route("/hello/<name>")
 def hello(name):
@@ -25,15 +26,31 @@ def hello(name):
 
 @app.route("/newgame")
 def newgame():
-	return render_template('newgame.html')
+	if 'game' not in request.form or 'user' not in request.form:
+		return render_template('newgame.html', response='')
 
-@app.route("/lobby")
-def lobby():
-	return render_template('lobby.html')
+	if request.form['game'] in games:
+		return render_template('newgame.html', response='Game already exists!')
+
+	games[request.form['game']] = [request.form['user']]
+	return render_template('lobby.html', game_id=request.form['game'], game=[request.form['user']])
 
 @app.route("/joingame")
 def joingame():
-	return render_template('joingame.html')
+	found_game = ''
+	if 'game' not in request.form or 'user' not in request.form:
+		return render_template('joingame.html', found_game='')
+
+	game = request.form['game']
+	username = request.args['user']
+	if game in games:
+		if username in games[game]:
+			return render_template('joingame.html', found_game=username + ' already in game!')
+		else:
+			games[game].append(username)
+			pusher.trigger(game, 'join-game', {'user': username})
+			return render_template('lobby.html', game_id=game, game=games[game])
+	return render_template('joingame.html', found_game=game + ' does not exist!')
 
 @app.route("/game")
 def game():
