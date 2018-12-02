@@ -38,7 +38,7 @@
   </head>
   <body class="text-center default-form">
     <h1>Waiting Lobby</h1>
-    <h2>Lobby Code {{ game_id }}</h2>
+    <h2>Lobby Code: {{ game_id }}</h2>
     <div class="card">
       <div class="card-body">
         <h3 class="card-title">Players</h3>
@@ -46,15 +46,19 @@
         </ul>
       </div>
     </div>
-    <form>
+    <form class="text-center default-form">
       <div class="form-row">
-      {% if is_owner %}
-        <button type="button" class="btn btn-lg btn-outline-secondary">Start Game</button>
-      {% else %}
-        <button type="button" class="btn btn-lg btn-outline-secondary" disabled>Start Game</button>
-      {% endif %}
-
-    </div>
+        <div class="form-group col-sm-6">
+          {% if is_owner %}
+            <button type="button" class="btn btn-lg btn-outline-secondary">Start Game</button>
+          {% else %}
+            <button type="button" class="btn btn-lg btn-outline-secondary" disabled>Start Game</button>
+          {% endif %}
+        </div>
+        <div class="form-group col-sm-6">
+          <button type="button" class="btn btn-lg btn-outline-secondary">Back</button>
+        </div>
+      </div>
     </form>
 
     <!-- Optional JavaScript -->
