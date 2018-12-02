@@ -45,7 +45,7 @@ def newgame():
 		return render_template('newgame.html', response='')
 	game = generateRoomId()
 
-	games[game] = {'players': [request.args['name']], 'owner': request.args['name']}
+	games[game] = {'players': {request.args['name']: ''}, 'owner': request.args['name']}
 	return render_template('lobby.html', game_id=game, game=json.dumps([request.args['name']]), is_owner=True)
 
 @app.route("/lobby")
@@ -64,22 +64,39 @@ def joingame():
 		if username in games[game]:
 			return render_template('joingame.html', found_game=username + ' already in game!')
 		else:
-			games[game]['players'].append(username)
+			games[game]['players'][username] = ''
 			pusher.trigger(game, 'join-game', {'user': username})
 			return render_template('lobby.html', game_id=game, game=json.dumps(games[game]), is_owner=False)
 	return render_template('joingame.html', found_game=game + ' does not exist!')
 
+@app.route("/startgame")
+def initgame():
+	game = request.args['game']
+	userlist = games[game]['players']
+	location = random.choice(locations.keys())
+	rolelist = locations[location]
+	spy = random.choice(userlist.keys())
+	del userlist[spy]
+
+	games[game]['location'] = location
+	games[game]['spy'] = spy
+
+	for user in userlist:
+		role = random.choice(rolelist)
+		del rolelist[role]
+		games[game]['players'][user] = role
+
+
 @app.route("/game")
 def game():
 	if 'game' not in request.form or 'user' not in request.form:
-		return redirect(url_for('home')
+		return redirect(url_for('home'))
 
 	game = request.args['game']
 	user = request.args['user']
 	if game in games:
-		#TODO game logic goes here
-
-
+		#TODO game logic goes here. Send location and role to player
+		
 		return render_template('game.html')
 
 
