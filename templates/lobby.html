@@ -5,8 +5,9 @@
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no">
 
-    <!-- Bootstrap CSS -->
+    <!-- CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
+    <link  rel="stylesheet" type= "text/css" href="{{ url_for('static',filename='styles/master.css') }}">
 
     <title>Waiting Lobby</title>
     <script src="https://js.pusher.com/4.3/pusher.min.js"></script>
@@ -34,24 +35,25 @@
       });
     </script>
   </head>
-  <body>
+  <body class="text-center default-form">
     <h1>Waiting Lobby</h1>
-
     <div class="card">
       <div class="card-body">
-        <h5 class="card-title">Players</h5>
+        <h3 class="card-title">Players</h3>
         <ul id="players" class="list-group list-group-flush">
         </ul>
       </div>
     </div>
-
-    {% if is_owner %}
-      <button type="button" class="btn btn-primary">Start Game</button>
-    {% else %}
-      <button type="button" class="btn btn-primary" disabled>Start Game</button>
-    {% endif %}
-    <a href="/game">Start Game</a>
-    <a href="/home">Back</a>
+    <form>
+      <div class="form-row">
+      {% if is_owner %}
+        <button type="button" class="btn btn-lg btn-outline-secondary">Start Game</button>
+      {% else %}
+        <button type="button" class="btn btn-lg btn-outline-secondary" disabled>Start Game</button>
+      {% endif %}
+      
+    </div>
+    </form>
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
