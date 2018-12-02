@@ -19,9 +19,7 @@
         forceTLS: true
       });
 
-
-
-      var channel = pusher.subscribe("{{ game_id|json }}");
+      var channel = pusher.subscribe("{{ game_id }}");
       channel.bind('join-game', function eventHandler (data) {
         const html = `<li class="list-group-item">${data.user}</li>`;
         let list = document.querySelector("#players");
@@ -29,7 +27,7 @@
       });
     </script>
     <script>
-      var game = {{ game|json }};
+      var game = {{ game }};
       let players = document.querySelector('#players');
       game.players.forEach(player => {
         players.innerHTML += `<li class="list-group-item">${player}</li>`;
