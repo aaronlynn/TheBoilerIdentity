@@ -76,13 +76,13 @@ def joingame():
 	game = request.args['game']
 	username = request.args['name']
 	if game in games:
-		if username in games[game]:
-			return render_template('joingame.html', found_game=username + ' already in game!')
+		if username in games[game]['players']:
+			return render_template('joingame.html', found_game=username + ' is already in game!')
 		else:
 			games[game]['players'][username] = ''
 			pusher.trigger(game, 'join-game', {'user': username})
 			return render_template('lobby.html', player=request.args['name'], game_id=game, game=games[game]['players'], is_owner=False)
-	return render_template('joingame.html', found_game=game + ' does not exist!')
+	return render_template('joingame.html', found_game=game + ' does not exist!', name=request.args['name'])
 
 @app.route("/startgame")
 def initgame():
