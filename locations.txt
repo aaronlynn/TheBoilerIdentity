@@ -1,0 +1,18 @@
+Beach
+Casino
+Circus
+Bank
+Hotel
+Restaurant
+Supermarket
+Service Station
+Hospital
+Police Station
+University
+Airplane
+Train
+Submarine
+Cathedral
+Movie Theater
+Space Station
+Pirate Ship
