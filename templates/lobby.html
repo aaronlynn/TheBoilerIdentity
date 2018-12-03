@@ -49,7 +49,7 @@
       <div class="form-row">
         <div class="form-group col-sm-6">
           {% if is_owner %}
-            <button type="button" class="btn btn-lg btn-primary" href="/startgame?game={{ game_id }}">Start Game</button>
+            <a role="button" class="btn btn-lg btn-primary" href="/startgame?game={{ game_id }}">Start Game</a>
           {% else %}
             <button type="button" class="btn btn-lg btn-outline-secondary" disabled>Start Game</button>
           {% endif %}

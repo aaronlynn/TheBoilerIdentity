@@ -3,6 +3,7 @@ from flask import render_template
 from flask import request
 from flask import redirect
 from flask import url_for
+import time
 import string
 import random
 import json
@@ -31,6 +32,16 @@ def generateRoomId():
 		for i in range(0, 4):
 			returned += random.choice(string.ascii_uppercase)
 	return returned
+
+def startClock(game):
+	minutes = 1
+	time_start = time.time()
+	seconds = 0
+	while seconds <= 60 * minutes:
+		pusher.trigger(game, 'clock', {'time': time.strftime("%M:%S", time.gmtime(60 * minutes - seconds))})
+		time.sleep(1)
+		seconds = int(time.time() - time_start)
+	pusher.trigger(game, 'end-game', {})
 
 @app.route("/")
 @app.route("/home")
@@ -88,24 +99,25 @@ def joingame():
 def initgame():
 	game = request.args['game']
 	userlist = games[game]['players']
-	location = random.choice(locations.keys())
+	location = random.choice(list(locations))
 	rolelist = locations[location]
-	spy = random.choice(userlist.keys())
-	del userlist[spy]
+	spy = random.choice(list(userlist))
+	userlist[spy]
 
 	games[game]['location'] = location
 	games[game]['spy'] = spy
 
 	for user in userlist:
 		role = random.choice(rolelist)
-		del rolelist[role]
+		rolelist.remove(role)
 		games[game]['players'][user] = role
 
 	pusher.trigger(game, 'start-game', {})
+	startClock(game)
 
 @app.route("/game")
 def game():
-	if 'game' not in request.form or 'user' not in request.form:
+	if 'game' not in request.args or 'user' not in request.args:
 		return redirect(url_for('home'))
 
 	game = request.args['game']
@@ -113,9 +125,7 @@ def game():
 	if game in games:
 		#TODO game logic goes here. Send location and role to player. Start a clock?
 		
-		return render_template('game.html')
-
-
+		return render_template('game.html', game_id=game, user=user)
 
 	return redirect(url_for('home'))
 
