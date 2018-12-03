@@ -9,7 +9,8 @@ import random
 import json
 from pusher import Pusher
 from locations import *
-
+from purduelocations import *
+import sys
 
 pusher = Pusher(
   app_id='662419',
@@ -96,19 +97,29 @@ def joingame():
 @app.route("/startgame")
 def initgame():
 	game = request.args['game']
-	userlist = games[game]['players']
-	location = random.choice(list(locations))
+	userlist = list(games[game]['players'].keys())
+	if True:
+		location = random.choice(list(locations))
+	else:
+		location = random.choice(list(purduelocations))
+
 	rolelist = locations[location]
 	spy = random.choice(list(userlist))
-	userlist[spy]
+	print(userlist, file=sys.stderr)
+	userlist.remove(spy)
+	print(userlist, file=sys.stderr)
 
-	games[game]['location'] = location
-	games[game]['spy'] = spy
+	games[game]['players'][spy] = 'Spy' #should set role
+	games[game]['location'] = location	#sets location
+	games[game]['spy'] = spy            #set spy for game lobby
 
 	for user in userlist:
+		print(user, file=sys.stderr)
 		role = random.choice(rolelist)
 		rolelist.remove(role)
 		games[game]['players'][user] = role
+
+	print(games[game]['players'], file=sys.stderr)
 
 	pusher.trigger(game, 'start-game', {})
 	startClock(game, minutes=8)
@@ -121,9 +132,10 @@ def game():
 	game = request.args['game']
 	user = request.args['user']
 	if game in games:
-		#TODO game logic goes here. Send location and role to player. Start a clock?
+		#TODO game logic goes here. Send location and role to player.
+
 		
-		return render_template('game.html', game_id=game, user=user)
+		return render_template('game.html', game=games[game], game_id=game, user=user, location=games[game]['location'], role=games[game]['players'][user])
 
 	return redirect(url_for('home'))
 
