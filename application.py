@@ -23,7 +23,6 @@ app = Flask(__name__)
 games = {}
 
 def generateRoomId():
-	alph = 'ABCDEFGHIJKLMNOPQRSTUVWYZ'
 	returned = ''
 	for i in range(0, 4):
 		returned += random.choice(string.ascii_uppercase)
@@ -33,8 +32,7 @@ def generateRoomId():
 			returned += random.choice(string.ascii_uppercase)
 	return returned
 
-def startClock(game):
-	minutes = 1
+def startClock(game, minutes=1):
 	time_start = time.time()
 	seconds = 0
 	while seconds <= 60 * minutes:
@@ -113,7 +111,7 @@ def initgame():
 		games[game]['players'][user] = role
 
 	pusher.trigger(game, 'start-game', {})
-	startClock(game)
+	startClock(game, minutes=8)
 
 @app.route("/game")
 def game():
