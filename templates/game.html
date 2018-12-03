@@ -9,9 +9,30 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
 
     <title>Game</title>
+    <script src="https://js.pusher.com/4.3/pusher.min.js"></script>
+    <script>
+      // Enable pusher logging - don't include this in production
+      Pusher.logToConsole = true;
+
+      var pusher = new Pusher('63cda1f62b663027a43e', {
+        cluster: 'us2',
+        forceTLS: true
+      });
+
+      var channel = pusher.subscribe("{{ game_id }}");
+
+      channel.bind('clock', function eventHandler (data) {
+        const html = `<h4>${data.time}</li>`;
+        let clock = document.querySelector("#clock");
+        clock.innerHTML = html;
+      });
+    </script>
   </head>
   <body>
     <h1>Game</h1>
+    <h2>{{ game_id }}</h2>
+    <h3>Name: {{ user }}</h3>
+    <h5>Time: <div id="clock"></div></h5>
     <a href="/home">Quit to Home</a>
 
     <!-- Optional JavaScript -->

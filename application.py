@@ -3,6 +3,9 @@ from flask import render_template
 from flask import request
 from flask import redirect
 from flask import url_for
+import time
+import string
+import random
 import json
 from pusher import Pusher
 from locations import *
@@ -23,16 +26,36 @@ def generateRoomId():
 	alph = 'ABCDEFGHIJKLMNOPQRSTUVWYZ'
 	returned = ''
 	for i in range(0, 4):
-		returned += alph[random.randint(0, 25)]
+		returned += random.choice(string.ascii_uppercase)
 	while returned in games:
 		returned = ''
 		for i in range(0, 4):
-			returned += alph[random.randint(0, 25)]
+			returned += random.choice(string.ascii_uppercase)
 	return returned
+
+def startClock(game):
+	minutes = 1
+	time_start = time.time()
+	seconds = 0
+	while seconds <= 60 * minutes:
+		pusher.trigger(game, 'clock', {'time': time.strftime("%M:%S", time.gmtime(60 * minutes - seconds))})
+		time.sleep(1)
+		seconds = int(time.time() - time_start)
+	pusher.trigger(game, 'end-game', {})
 
 @app.route("/")
 @app.route("/home")
 def home():
+	if 'make' in request.args:
+		if 'name' not in request.args:
+			return render_template('index.html')
+		else:
+			return redirect('/newgame?name=' + request.args['name'])
+	if 'join' in request.args:
+		if 'name' not in request.args:
+			return render_template('index.html')
+		else:
+			return redirect('/joingame?name=' + request.args['name'])
 	return render_template('index.html')
 
 @app.route("/hello/<name>")
@@ -46,7 +69,7 @@ def newgame():
 	game = generateRoomId()
 
 	games[game] = {'players': {request.args['name']: ''}, 'owner': request.args['name']}
-	return render_template('lobby.html', game_id=game, game=json.dumps([request.args['name']]), is_owner=True)
+	return render_template('lobby.html', player=request.args['name'], game_id=game, game=games[game]['players'], is_owner=True)
 
 @app.route("/lobby")
 def lobby():
@@ -55,41 +78,46 @@ def lobby():
 @app.route("/joingame")
 def joingame():
 	found_game = ''
-	if 'game' not in request.form or 'user' not in request.form:
+	if 'game' not in request.args and 'name' not in request.args:
 		return render_template('joingame.html', found_game='')
 
-	game = request.form['game']
-	username = request.form['user']
+	if 'name' in request.args and 'game' not in request.args:
+		return render_template('joingame.html', name=request.args['name'], found_game='')
+
+	game = request.args['game']
+	username = request.args['name']
 	if game in games:
-		if username in games[game]:
-			return render_template('joingame.html', found_game=username + ' already in game!')
+		if username in games[game]['players']:
+			return render_template('joingame.html', found_game=username + ' is already in game!')
 		else:
 			games[game]['players'][username] = ''
 			pusher.trigger(game, 'join-game', {'user': username})
-			return render_template('lobby.html', game_id=game, game=json.dumps(games[game]), is_owner=False)
-	return render_template('joingame.html', found_game=game + ' does not exist!')
+			return render_template('lobby.html', player=request.args['name'], game_id=game, game=games[game]['players'], is_owner=False)
+	return render_template('joingame.html', found_game=game + ' does not exist!', name=request.args['name'])
 
 @app.route("/startgame")
 def initgame():
 	game = request.args['game']
 	userlist = games[game]['players']
-	location = random.choice(locations.keys())
+	location = random.choice(list(locations))
 	rolelist = locations[location]
-	spy = random.choice(userlist.keys())
-	del userlist[spy]
+	spy = random.choice(list(userlist))
+	userlist[spy]
 
 	games[game]['location'] = location
 	games[game]['spy'] = spy
 
 	for user in userlist:
 		role = random.choice(rolelist)
-		del rolelist[role]
+		rolelist.remove(role)
 		games[game]['players'][user] = role
 
+	pusher.trigger(game, 'start-game', {})
+	startClock(game)
 
 @app.route("/game")
 def game():
-	if 'game' not in request.form or 'user' not in request.form:
+	if 'game' not in request.args or 'user' not in request.args:
 		return redirect(url_for('home'))
 
 	game = request.args['game']
@@ -97,9 +125,7 @@ def game():
 	if game in games:
 		#TODO game logic goes here. Send location and role to player. Start a clock?
 		
-		return render_template('game.html')
-
-
+		return render_template('game.html', game_id=game, user=user)
 
 	return redirect(url_for('home'))
 
