@@ -29,9 +29,13 @@
     </script>
   </head>
   <body>
-    <h1>Game</h1>
-    <h2>{{ game_id }}</h2>
+    <h1>Game: {{ game }}</h1>
+    <h2>Room: {{ game_id }}</h2>
     <h3>Name: {{ user }}</h3>
+    <h3>Role: {{ role }}</h3>
+    {%if role!='Spy'%}
+    <h3>Location: {{ location }}</h3>
+    {%endif%}
     <h5>Time: <div id="clock"></div></h5>
     <a href="/home">Quit to Home</a>
 
