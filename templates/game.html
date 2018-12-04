@@ -9,7 +9,9 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
 
     <title>Game</title>
+    <!-- jqeury -->
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
+    <!-- pusher -->
     <script src="https://js.pusher.com/4.3/pusher.min.js"></script>
     <script>
       // Enable pusher logging - don't include this in production
@@ -37,7 +39,15 @@
       });
 
       channel.bind('vote-result', function eventHandler(data) {
-        const html = data.message;
+        const html = `
+          <div class="alert alert-info alert-dismissible fade show" role="alert">
+            ${data.message}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>`;
+        let voteresult = document.querySelector("#vote-result");
+        voteresult.innerHTML = html;
         console.log(html);
       });
 
@@ -64,6 +74,8 @@
     </script>
   </head>
   <body>
+    <div id="vote-result">
+    </div>
     <div class="modal fade" id="accused-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" show="false">
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
