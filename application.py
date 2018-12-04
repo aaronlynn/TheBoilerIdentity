@@ -11,6 +11,7 @@ from pusher import Pusher
 from locations import *
 from purduelocations import *
 import sys
+import urllib
 
 pusher = Pusher(
   app_id='662419',
@@ -81,15 +82,17 @@ def joingame():
 		return render_template('joingame.html', found_game='')
 
 	if 'name' in request.args and 'game' not in request.args:
-		return render_template('joingame.html', name=request.args['name'], found_game='')
+		# print("Join game name: " + urllib.parse.quote(request.args['name']), file=sys.stderr)
+		return render_template('joingame.html', name=urllib.parse.quote(request.args['name']), found_game='')
 
 	game = request.args['game']
-	username = request.args['name']
+	username = urllib.parse.unquote(request.args['name'])
+
 	if game in games:
 		if username in games[game]['players']:
-			return render_template('joingame.html', found_game=username + ' is already in game!')
+			return render_template('joingame.html', found_game=username + ' is already in game!', name=username)
 		if len(games[game]['players']) == 8:
-			return render_template('joingame.html', found_game='Game is full!')
+			return render_template('joingame.html', found_game='Game is full!', name=username)
 
 		games[game]['players'][username] = ''
 		pusher.trigger(game, 'join-game', {'user': username})
