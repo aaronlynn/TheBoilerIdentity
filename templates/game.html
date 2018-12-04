@@ -36,6 +36,11 @@
         $('#accused-modal').modal('show');
       });
 
+      channel.bind('vote-result', function eventHandler(data) {
+        const html = data.message;
+        console.log(html);
+      });
+
       function accuseButton(accused) {
         // console.log(accused);
         var xhr = new XMLHttpRequest();
@@ -46,14 +51,14 @@
       function accuseFor() {
         console.log("{{ user }} is for");
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', "/accuse?game={{ game_id }}&accused=" + accused + "&accuser={{ user }}", true);
+        xhr.open('GET', "/vote?game={{ game_id }}&persuasion=for", true);
         xhr.send();
       }
 
       function accuseAgainst() {
         console.log("{{ user }} is against");
         var xhr = new XMLHttpRequest();
-        xhr.open('GET', "/accuse?game={{ game_id }}&accused=" + accused + "&accuser={{ user }}", true);
+        xhr.open('GET', "/vote?game={{ game_id }}&persuasion=against", true);
         xhr.send();
       }
     </script>

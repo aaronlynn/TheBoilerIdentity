@@ -142,10 +142,10 @@ def accuse():
 	accuser = request.args['accuser']
 	accused = request.args['accused']
 	game = request.args['game']
-	if accuser in games['game']['has_accused']:
-		return 'Already accused!'
+	if accuser in games[game]['has_accused']:
+		return "You've already accused this round!"
 
-	games['game']['has_accused'].append(accuser)
+	games[game]['has_accused'].append(accuser)
 	games[game]['vote'] = {'accused': accused, 'accuser': accuser, 'for': 0, 'against': 0}
 
 	print(accuser + " has accused " + accused + " in game: " + game, file=sys.stderr)
@@ -154,7 +154,24 @@ def accuse():
 
 @app.route("/vote")
 def vote():
-	
+	game = request.args['game']
+	persuasion = request.args['persuasion']
+	games[game]['vote'][persuasion] += 1
+	if games[game]['vote']['for'] + games[game]['vote']['against'] == len(games[game]['players']):
+		# vote is done!
+		if games[game]['vote']['for'] == len(games[game]['players']):
+			# unanimous, reveal spy
+			won = ''
+			if games[game]['vote']['accused'] == games[game]['spy']:
+				won = 'The spy has lost! ' + games[game]['vote']['accuser'] + ' correctly guessed it was ' + games[game]['spy']
+			else:
+				won = 'The spy has won! It was ' + games[game]['spy']
+			pusher.trigger(game, 'vote-result', {'message': 'Vote was unanimously passed! ' + won}) 
+			del games[game]
+		else:
+			pusher.trigger(game, 'vote-result', {'message': 'Vote failed ' + str(games[game]['vote']['for']) + ' for, ' + str(games[game]['vote']['against']) + ' against'}) 
+			games[game]['vote'] = {}
+	return ''
 
 @app.route("/pushertest/<name>")
 def pushertest(name):
