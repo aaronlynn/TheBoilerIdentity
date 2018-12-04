@@ -9,6 +9,7 @@
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
 
     <title>Game</title>
+    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.3.1/jquery.min.js"></script>
     <script src="https://js.pusher.com/4.3/pusher.min.js"></script>
     <script>
       // Enable pusher logging - don't include this in production
@@ -29,33 +30,36 @@
 
       channel.bind('accuse', function eventHandler(data) {
         const html = data.accuser + ' has accused ' + data.accused + ' of being the spy';
+        console.log(html);
         let modalbody = document.querySelector("#accused-modal-body");
         modalbody.innerHTML = html;
-        document.querySelector("#accused-modal").show = true;
-
+        $('#accused-modal').modal('show');
       });
 
-      function accuseFor() {
-        console.log("{{ user }} is for");
-      }
-
-      function accuseAgainst() {
-        console.log("{{ user }} is against");
-      }
-
       function accuseButton(accused) {
-        console.log(accused);
+        // console.log(accused);
         var xhr = new XMLHttpRequest();
         xhr.open('GET', "/accuse?game={{ game_id }}&accused=" + accused + "&accuser={{ user }}", true);
         xhr.send();
       }
 
-      document.querySelector("#accuse-for").onclick = accuseFor;
-      document.querySelector("#accuse-against").onclick = accuseAgainst;
+      function accuseFor() {
+        console.log("{{ user }} is for");
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', "/accuse?game={{ game_id }}&accused=" + accused + "&accuser={{ user }}", true);
+        xhr.send();
+      }
+
+      function accuseAgainst() {
+        console.log("{{ user }} is against");
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', "/accuse?game={{ game_id }}&accused=" + accused + "&accuser={{ user }}", true);
+        xhr.send();
+      }
     </script>
   </head>
   <body>
-    <div class="modal fade" id="accused-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true">
+    <div class="modal fade" id="accused-modal" tabindex="-1" role="dialog" aria-labelledby="exampleModalCenterTitle" aria-hidden="true" show="false">
       <div class="modal-dialog modal-dialog-centered" role="document">
         <div class="modal-content">
           <div class="modal-header">
@@ -63,8 +67,8 @@
           </div>
           <div class="modal-body" id="accused-modal-body"></div>
           <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-dismiss="modal" id="accuse-against">Against</button>
-            <button type="button" class="btn btn-primary" data-dismiss="modal" id="accuse-for">For</button>
+            <button type="button" class="btn btn-secondary" data-dismiss="modal" id="accuse-against" onclick="accuseAgainst()">Against</button>
+            <button type="button" class="btn btn-primary" data-dismiss="modal" id="accuse-for" onclick="accuseFor()">For</button>
           </div>
         </div>
       </div>

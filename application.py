@@ -67,7 +67,7 @@ def newgame():
 		return render_template('newgame.html', response='')
 	game = generateRoomId()
 
-	games[game] = {'players': {request.args['name']: ''}, 'owner': request.args['name']}
+	games[game] = {'players': {request.args['name']: ''}, 'owner': request.args['name'], 'has_accused': []}
 	return render_template('lobby.html', player=request.args['name'], game_id=game, game=games[game]['players'], is_owner=True)
 
 @app.route("/lobby")
@@ -90,7 +90,7 @@ def joingame():
 			return render_template('joingame.html', found_game=username + ' is already in game!')
 		if len(games[game]['players']) == 8:
 			return render_template('joingame.html', found_game='Game is full!')
-			
+
 		games[game]['players'][username] = ''
 		pusher.trigger(game, 'join-game', {'user': username})
 		return render_template('lobby.html', player=request.args['name'], game_id=game, game=games[game]['players'], is_owner=False)
@@ -120,8 +120,6 @@ def initgame():
 		rolelist.remove(role)
 		games[game]['players'][user] = role
 
-	print(games[game]['players'], file=sys.stderr)
-
 	pusher.trigger(game, 'start-game', {})
 	startClock(game, minutes=8)
 
@@ -144,8 +142,19 @@ def accuse():
 	accuser = request.args['accuser']
 	accused = request.args['accused']
 	game = request.args['game']
+	if accuser in games['game']['has_accused']:
+		return 'Already accused!'
+
+	games['game']['has_accused'].append(accuser)
+	games[game]['vote'] = {'accused': accused, 'accuser': accuser, 'for': 0, 'against': 0}
+
 	print(accuser + " has accused " + accused + " in game: " + game, file=sys.stderr)
 	pusher.trigger(game, 'accuse', {'accused': accused, 'accuser': accuser}) 
+	return ''
+
+@app.route("/vote")
+def vote():
+	
 
 @app.route("/pushertest/<name>")
 def pushertest(name):
