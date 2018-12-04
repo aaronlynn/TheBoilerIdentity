@@ -142,35 +142,38 @@ def accuse():
 	accuser = request.args['accuser']
 	accused = request.args['accused']
 	game = request.args['game']
-	if accuser in games[game]['has_accused']:
-		return "You've already accused this round!"
+	if accuser in games[game]['has_accused']:		# if they are in the list of people that have accused don't
+		return "You've already accused this round!"	# allow them to accuse and send the message that they've accused
 
 	games[game]['has_accused'].append(accuser)
-	games[game]['vote'] = {'accused': accused, 'accuser': accuser, 'for': 0, 'against': 0}
+	games[game]['vote'] = {'accused': accused, 'accuser': accuser, 'for': 0, 'against': 0} # starts up a vote
 
-	print(accuser + " has accused " + accused + " in game: " + game, file=sys.stderr)
+	# print(accuser + " has accused " + accused + " in game: " + game, file=sys.stderr)
 	pusher.trigger(game, 'accuse', {'accused': accused, 'accuser': accuser}) 
 	return ''
 
 @app.route("/vote")
 def vote():
 	game = request.args['game']
-	persuasion = request.args['persuasion']
-	games[game]['vote'][persuasion] += 1
+	persuasion = request.args['persuasion'] # one of two values 'for' or 'against'
+	games[game]['vote'][persuasion] += 1 	# add the vote to the current vote in the game
 	if games[game]['vote']['for'] + games[game]['vote']['against'] == len(games[game]['players']):
 		# vote is done!
 		if games[game]['vote']['for'] == len(games[game]['players']):
-			# unanimous, reveal spy
+			# unanimous, reveal spy, also the game is over one way or another
+			# can maybe add more things to reveal if we want
 			won = ''
 			if games[game]['vote']['accused'] == games[game]['spy']:
 				won = 'The spy has lost! ' + games[game]['vote']['accuser'] + ' correctly guessed it was ' + games[game]['spy']
 			else:
 				won = 'The spy has won! It was ' + games[game]['spy']
-			pusher.trigger(game, 'vote-result', {'message': 'Vote was unanimously passed! ' + won}) 
+			pusher.trigger(game, 'vote-result', {'message': 'Vote was unanimously passed! ' + won})
 			del games[game]
 		else:
+			# the vote failed, reset it
 			pusher.trigger(game, 'vote-result', {'message': 'Vote failed ' + str(games[game]['vote']['for']) + ' for, ' + str(games[game]['vote']['against']) + ' against'}) 
 			games[game]['vote'] = {}
+	# vote isn't done, do nothing
 	return ''
 
 @app.route("/pushertest/<name>")

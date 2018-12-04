@@ -39,21 +39,42 @@
       });
 
       channel.bind('vote-result', function eventHandler(data) {
+        let alert_type = '';
+        if (data.message.startsWith("Vote failed")) { // assign alert different colors based on vote result
+          alert_type = 'danger';
+        }
+        else {
+          alert_type = 'success';
+        }
         const html = `
-          <div class="alert alert-info alert-dismissible fade show" role="alert">
+          <div class="alert alert-${alert_type} alert-dismissible fade show" role="alert">
             ${data.message}
             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
           </div>`;
-        let voteresult = document.querySelector("#vote-result");
+        let voteresult = document.querySelector("#vote-result"); // show the alert containing the vote result
         voteresult.innerHTML = html;
-        console.log(html);
       });
 
       function accuseButton(accused) {
         // console.log(accused);
         var xhr = new XMLHttpRequest();
+        xhr.onreadystatechange = function() {
+        if (xhr.readyState == XMLHttpRequest.DONE) {
+            if (xhr.responseText !== '') { // if they've already voted them (server doesn't return ''), alert them
+              const html = `
+                <div class="alert alert-warning alert-dismissible fade show" role="alert">
+                  ${xhr.responseText}
+                  <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>`;
+              let voteresult = document.querySelector("#vote-result");
+              voteresult.innerHTML = html;
+            }
+          }
+        }
         xhr.open('GET', "/accuse?game={{ game_id }}&accused=" + accused + "&accuser={{ user }}", true);
         xhr.send();
       }
