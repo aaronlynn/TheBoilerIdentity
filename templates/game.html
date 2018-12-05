@@ -33,14 +33,25 @@
       });
 
       channel.bind('accuse', function eventHandler(data) {
-        if ('{{ user }}' !== data.accused) {
+        if ('{{ user }}' !== data.accused && '{{ user }}' !== data.accuser) {
           const html = data.accuser + ' has accused ' + data.accused + ' of being the spy';
           // console.log(html);
           let modalbody = document.querySelector("#accused-modal-body");
           modalbody.innerHTML = html;
           $('#accused-modal').modal('show');
         }
-        else {
+        else if('{{ user }}' === data.accuser) {
+          const html = `
+            <div class="alert alert-danger alert-dismissible fade show" role="alert">
+              <strong>You have accused ${data.accused} of being the spy</strong>
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>`;
+          let voteresult = document.querySelector("#vote-result");
+          voteresult.innerHTML = html;
+        }
+        else if('{{ user }}' === data.accused) {
           const html = `
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
               <strong>You have been accused by ${data.accuser} of being the spy</strong>
