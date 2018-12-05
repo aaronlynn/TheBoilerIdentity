@@ -1,7 +1,25 @@
 .default-form {
-  width: 200%;
-  max-width: 500px;
+  /*width: 200%;*/
+  max-width: 100%;
   padding: 30px;
   margin-left: auto;
   margin-right: auto;
+}
+
+.game-container {
+  width:
+}
+
+.two-column {
+  list-style-type: none;
+  columns: 2;
+  -webkit-columns: 2;
+  -moz-columns: 2;
+}
+
+.scrollable-list {
+    max-height: 300px;
+    margin-bottom: 10px;
+    overflow:scroll;
+    -webkit-overflow-scrolling: touch;
 }

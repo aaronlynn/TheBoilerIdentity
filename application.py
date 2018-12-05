@@ -11,6 +11,8 @@ from pusher import Pusher
 from locations import *
 from purduelocations import *
 import sys
+import urllib
+from time import sleep
 
 pusher = Pusher(
   app_id='662419',
@@ -20,7 +22,7 @@ pusher = Pusher(
   ssl=True
 )
 
-app = Flask(__name__)
+application = Flask(__name__)
 games = {}
 
 def generateRoomId():
@@ -36,20 +38,31 @@ def generateRoomId():
 def startClock(game, minutes=1):
 	time_start = time.time()
 	seconds = 0
-	while seconds <= 60 * minutes:
+	while seconds <= 60 * minutes and games[game]['clock']:
 		pusher.trigger(game, 'clock', {'time': time.strftime("%M:%S", time.gmtime(60 * minutes - seconds))})
 		time.sleep(1)
 		seconds = int(time.time() - time_start)
-	pusher.trigger(game, 'end-game', {})
+	if seconds > 60 * minutes:
+		# determine accusation order
+		userlist = list(games[game]['players'])
+		order = []
+		while len(userlist) > 0:
+			user = random.choice(userlist)
+			order.append(user)
+			userlist.remove(user)
+		games[game]['order'] = order
+		games[game]['current'] = 0
+		pusher.trigger(game, 'end-game', {})
 
-@app.route("/")
-@app.route("/home")
+@application.route("/")
+@application.route("/home")
 def home():
 	if 'make' in request.args:
 		if 'name' not in request.args:
 			return render_template('index.html')
 		else:
-			return redirect('/newgame?name=' + request.args['name'])
+			game = generateRoomId()
+			return redirect('/newgame?name=' + request.args['name'] + '&game=' + game)
 	if 'join' in request.args:
 		if 'name' not in request.args:
 			return render_template('index.html')
@@ -57,39 +70,54 @@ def home():
 			return redirect('/joingame?name=' + request.args['name'])
 	return render_template('index.html')
 
-@app.route("/hello/<name>")
+@application.route("/hello/<name>")
 def hello(name):
 	return render_template('hello.html', name=name)
 
-@app.route("/newgame")
+@application.route("/newgame")
 def newgame():
-	if 'name' not in request.args:
+	if 'name' not in request.args or 'game' not in request.args:
 		return render_template('newgame.html', response='')
-	game = generateRoomId()
+	game = request.args['game']
 
-	games[game] = {'players': {request.args['name']: ''}, 'owner': request.args['name'], 'has_accused': []}
+	#TODO handle if host or guest refreshes page. Currently recreates room with same room code but no players
+
+	games[game] = {'players': {request.args['name']: ''}, 'owner': request.args['name'], 'has_accused': [], 'clock': True}
 	return render_template('lobby.html', player=request.args['name'], game_id=game, game=games[game]['players'], is_owner=True)
 
-@app.route("/lobby")
+@application.route("/lobby")
 def lobby():
 	return render_template('lobby.html')
 
-@app.route("/joingame")
+@application.route("/leavegame")
+def leavegame():
+	game = request.args['game']
+	username = request.args['user']
+
+	if username in games[game]['players']:
+		del games[game]['players'][username]
+		pusher.trigger(game, 'leave-game', {'user': username})
+
+	return redirect(url_for('home'))
+
+@application.route("/joingame")
 def joingame():
 	found_game = ''
 	if 'game' not in request.args and 'name' not in request.args:
 		return render_template('joingame.html', found_game='')
 
 	if 'name' in request.args and 'game' not in request.args:
-		return render_template('joingame.html', name=request.args['name'], found_game='')
+		# print("Join game name: " + urllib.parse.quote(request.args['name']), file=sys.stderr)
+		return render_template('joingame.html', name=urllib.parse.quote(request.args['name']), found_game='')
 
-	game = request.args['game']
-	username = request.args['name']
+	game = request.args['game'].upper();
+	username = urllib.parse.unquote(request.args['name'])
+
 	if game in games:
 		if username in games[game]['players']:
-			return render_template('joingame.html', found_game=username + ' is already in game!')
+			return render_template('joingame.html', found_game=username + ' is already in game!', name=username)
 		if len(games[game]['players']) == 8:
-			return render_template('joingame.html', found_game='Game is full!')
+			return render_template('joingame.html', found_game='Game is full!', name=username)
 
 		games[game]['players'][username] = ''
 		pusher.trigger(game, 'join-game', {'user': username})
@@ -97,10 +125,11 @@ def joingame():
 	
 	return render_template('joingame.html', found_game=game + ' does not exist!', name=request.args['name'])
 
-@app.route("/startgame")
+@application.route("/startgame")
 def initgame():
 	game = request.args['game']
 	userlist = list(games[game]['players'].keys())
+	#locationlist = request.args['loc']
 	if True:
 		location = random.choice(list(locations))
 	else:
@@ -115,15 +144,15 @@ def initgame():
 	games[game]['spy'] = spy            #set spy for game lobby
 
 	for user in userlist:
-		print(user, file=sys.stderr)
+		# print(user, file=sys.stderr)
 		role = random.choice(rolelist)
 		rolelist.remove(role)
 		games[game]['players'][user] = role
 
 	pusher.trigger(game, 'start-game', {})
-	startClock(game, minutes=8)
+	startClock(game, minutes=.5)
 
-@app.route("/game")
+@application.route("/game")
 def game():
 	if 'game' not in request.args or 'user' not in request.args:
 		return redirect(url_for('home'))
@@ -131,53 +160,84 @@ def game():
 	game = request.args['game']
 	user = request.args['user']
 	if game in games:
-		#TODO game logic goes here. Send location and role to player.
-		
-		return render_template('game.html', game=games[game], game_id=game, user=user, location=games[game]['location'], role=games[game]['players'][user], players=games[game]['players'])
+		return render_template('game.html', game=games[game], game_id=game, user=user, location=games[game]['location'], role=games[game]['players'][user], players=games[game]['players'], locations=list(locations))
 
 	return redirect(url_for('home'))
 
-@app.route("/accuse")
+@application.route("/accuse")
 def accuse():
 	accuser = request.args['accuser']
 	accused = request.args['accused']
 	game = request.args['game']
-	if accuser in games[game]['has_accused']:
-		return "You've already accused this round!"
+	games[game]['clock'] = False
+	if accuser in games[game]['has_accused']:		# if they are in the list of people that have accused don't
+		return "You've already accused this round!"	# allow them to accuse and send the message that they've accused
 
 	games[game]['has_accused'].append(accuser)
-	games[game]['vote'] = {'accused': accused, 'accuser': accuser, 'for': 0, 'against': 0}
+	games[game]['vote'] = {'accused': accused, 'accuser': accuser, 'for': 1, 'against': 0} # starts up a vote
 
-	print(accuser + " has accused " + accused + " in game: " + game, file=sys.stderr)
+	# print(accuser + " has accused " + accused + " in game: " + game, file=sys.stderr)
 	pusher.trigger(game, 'accuse', {'accused': accused, 'accuser': accuser}) 
 	return ''
 
-@app.route("/vote")
+@application.route("/vote")
 def vote():
 	game = request.args['game']
-	persuasion = request.args['persuasion']
-	games[game]['vote'][persuasion] += 1
-	if games[game]['vote']['for'] + games[game]['vote']['against'] == len(games[game]['players']):
+	persuasion = request.args['persuasion'] # one of two values 'for' or 'against'
+	games[game]['vote'][persuasion] += 1 	# add the vote to the current vote in the game
+	if games[game]['vote']['for'] + games[game]['vote']['against'] == len(games[game]['players']) - 1:
 		# vote is done!
-		if games[game]['vote']['for'] == len(games[game]['players']):
-			# unanimous, reveal spy
+		if games[game]['vote']['for'] == len(games[game]['players']) - 1:
+			# unanimous, reveal spy, also the game is over one way or another
+			# can maybe add more things to reveal if we want
 			won = ''
 			if games[game]['vote']['accused'] == games[game]['spy']:
 				won = 'The spy has lost! ' + games[game]['vote']['accuser'] + ' correctly guessed it was ' + games[game]['spy']
 			else:
 				won = 'The spy has won! It was ' + games[game]['spy']
-			pusher.trigger(game, 'vote-result', {'message': 'Vote was unanimously passed! ' + won}) 
+			pusher.trigger(game, 'vote-result', {'message': 'Vote was unanimously passed! ' + won})
+			games[game]['clock'] = False
+			time.sleep(1)
 			del games[game]
 		else:
+			# the vote failed, reset it
 			pusher.trigger(game, 'vote-result', {'message': 'Vote failed ' + str(games[game]['vote']['for']) + ' for, ' + str(games[game]['vote']['against']) + ' against'}) 
 			games[game]['vote'] = {}
+			if 'order' not in games[game]:
+				games[game]['clock'] = True
+				startClock(game, minutes=8)
+			else:
+				games[game]['current'] = (games[game]['current'] + 1) % len(games[game]['players'])
+				pusher.trigger(game, 'end-game', {'current': games[game]['order'][ games[game]['current'] ]})
+	# vote isn't done, do nothing
 	return ''
 
-@app.route("/pushertest/<name>")
+@application.route("/guess")
+def guess():
+	game = request.args['game']
+	location = request.args['location']
+	games[game]['clock'] = False
+	message = 'The Spy, ' + games[game]['spy'] + ', guessed the location was ' + location + ' and they were'
+	if location == games[game]['location']:
+		pusher.trigger(game, 'spy-reveal', {'message': message + ' correct! The Spy wins!'})
+	else:
+		pusher.trigger(game, 'spy-reveal', {'message': message + ' incorrect! The Spy loses!'})
+	time.sleep(1)
+	del games[game]
+
+	return ''
+
+@application.route("/endgame")
+def endgame():
+	game = request.args['game']
+	user = request.args['user']
+	return render_template('endgame.html', order=games[game]['order'], user=user, game_id=game, role=games[game]['players'][user], location=games[game]['location'])
+
+@application.route("/pushertest/<name>")
 def pushertest(name):
 	pusher.trigger('my-channel', 'my-event', {'message': 'hello ' + name})
 	return "Pushed " + name
 
-@app.route("/pusherpage")
+@application.route("/pusherpage")
 def pusherpage():
 	return render_template("pushertest.html")

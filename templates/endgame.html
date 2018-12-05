@@ -7,7 +7,6 @@
 
     <!-- Bootstrap CSS -->
     <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.1.3/css/bootstrap.min.css" integrity="sha384-MCw98/SFnGE8fJT3GXwEOngsV7Zt27NXFoaoApmYm81iuXoPkFOJwJ8ERdknLPMO" crossorigin="anonymous">
-    <link  rel="stylesheet" type= "text/css" href="{{ url_for('static',filename='styles/master.css') }}">
 
     <title>Game</title>
     <!-- jqeury -->
@@ -16,6 +15,7 @@
     <script src="https://js.pusher.com/4.3/pusher.min.js"></script>
     <script>
       // Enable pusher logging - don't include this in production
+
       Pusher.logToConsole = true;
 
       var pusher = new Pusher('63cda1f62b663027a43e', {
@@ -24,13 +24,6 @@
       });
 
       var channel = pusher.subscribe("{{ game_id }}");
-
-      channel.bind('clock', function eventHandler (data) {    // changes the clock whenever it receives a notification from the server
-        // TODO: make it so the clock can stop and restart
-        const html = `<h4>${data.time}</li>`;
-        let clock = document.querySelector("#clock");
-        clock.innerHTML = html;
-      });
 
       channel.bind('accuse', function eventHandler(data) {
         if ('{{ user }}' !== data.accused && '{{ user }}' !== data.accuser) {
@@ -83,20 +76,43 @@
         voteresult.innerHTML = html;
       });
 
-      channel.bind('spy-reveal', function eventHandler(data) {
-        const html = `
-          <div class="alert alert-success alert-dismissible fade show" role="alert">
-            ${data.message}
+      channel.bind('end-game', function eventHandler(data) {
+        accuse_buttons = document.getElementsByName("accuse-button");
+
+        if (data.current === '{{ user }}') {
+          for (i = 0; i < accuse_buttons.length; i++) {
+            if (accuse_buttons[i].hasAttribute("disabled")) {
+              accuse_buttons[i].removeAttribute("disabled");
+            }
+          }
+
+          const html = `
+          <div class="alert alert-info alert-dismissible fade show" role="alert">
+            It is your turn to accuse someone
             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
           </div>`;
-        let voteresult = document.querySelector("#vote-result");    // show the alert containing the vote result
-        voteresult.innerHTML = html;
-      });
+          let voteresult = document.querySelector("#vote-result");    // show the alert containing the vote result
+          voteresult.innerHTML += html;
+        }
+        else {
+          for (i = 0; i < accuse_buttons.length; i++) {
+            accuse_buttons[i].setAttribute("disabled", "");
+          }
+        }
 
-      channel.bind('end-game', function eventHandler (data) {
-        window.location.replace("/endgame?game={{ game_id }}&user={{ user }}")
+        player_names = document.getElementsByName("player-name");
+        for (i = 0; i < player_names.length; i++) {
+          if (player_names[i].innerHTML === data.current) {
+            // console.log("transformed: " + player_name.innerHTML);
+            player_names[i].innerHTML = '<strong>' + player_names[i].innerHTML + '</strong>';
+            // console.log("to: " + player_name.innerHTML);
+          }
+          else if (player_names[i].innerHTML.startsWith("<strong>")) {
+            player_names[i].innerHTML = player_names[i].innerText;
+          }
+        }
       });
 
       function accuseButton(accused) {
@@ -134,16 +150,9 @@
         xhr.open('GET', "/vote?game={{ game_id }}&persuasion=against", true);
         xhr.send();
       }
-
-      function guessLocation(location) {
-        // console.log("{{ user }} is for");
-        var xhr = new XMLHttpRequest();
-        xhr.open('GET', "/guess?game={{ game_id }}&location=" + location, true);
-        xhr.send();
-      }
     </script>
   </head>
-  <body class="text-center">
+  <body>
     <!-- vote result div, used to alert the players of a vote result, and if they've already accused -->
     <div id="vote-result">
     </div>
@@ -166,54 +175,65 @@
     </div>
     <!-- end of voting modal -->
 
+    <h1>End of Game</h1>
     <h2>Room: {{ game_id }}</h2>
     <h3>Name: {{ user }}</h3>
     <h3>Role: {{ role }}</h3>
     {% if role != 'Spy' %}
     <h3>Location: {{ location }}</h3>
     {% endif %}
-    <h5>Time: <div id="clock"></div></h5>
-
-    <!-- loops through each player, creating a button that accuses that player -->
-    <!-- TODO: probably should put these buttons in a <li>, make it so the player can't accuse themselves, -->
-    <!--       and make it so the player can mark off other players they don't think are the spy           -->
-    <div class="container game-container">
-      <div class="row">
-        <div class="col">
-          <h3>Players</h3>
-          <ul class="list-group">
-            {% for player in players %}
-              {% if player != user %}
-                <li class="list-group-item">
-                  <button type="button" class="btn btn-outline-info active" id="player-button" data-toggle="button" aria-pressed="false" autocomplete="off" style="float: left;">{{ player }}</button>
-                  <button type="button" class="btn btn-outline-primary" id="accuse-button" onclick="accuseButton('{{ player }}');" style="float: right;">Accuse</button>
-                </li>
-              {% endif %}
-            {% endfor %}
-          </ul>
-        </div>
-        <div class="col">
-            <h3>Locations</h3>
-            <ul class="list-group scrollable-list">
-              {% for location in locations %}
-                {% if role == "Spy" %}
-                  <li class="list-group-item">
-                    <button type="button" class="btn btn-outline-info active" id="player-button" data-toggle="button" aria-pressed="false" autocomplete="off" style="float: left;">{{ location }}</button>
-                    <button type="button" class="btn btn-outline-primary" id="accuse-button" onclick="guessLocation('{{ location }}');" style="float: right;">Guess</button>
-                  </li>
-                {% else %}
-                  <li class="list-group-item">
-                    <button type="button" class="btn btn-outline-info active" id="player-button" data-toggle="button" aria-pressed="false" autocomplete="off" style="float: left;">{{ location }}</button>
-                  </li>
-                {% endif %}
-              {% endfor %}
-            </ul>
-          <!-- end of player loop -->
-        </div>
-      </div>
-    </div>
+    <h3>Order</h3>
+    <ul class="list-group list-group-flush" id="accuse-list">
+      {% for player in order %}
+          <li class="list-group-item">
+            <button type="button" class="btn btn-outline-info active" data-toggle="button" aria-pressed="false" autocomplete="off"><div name="player-name">{{ player }}</div></button>
+            {% if player != user %}
+              <button type="button" class="btn btn-outline-primary" name="accuse-button" onclick="accuseButton('{{ player }}');">Accuse</button>
+            {% endif %}
+          </li>
+      {% endfor %}
+    </ul>
 
     <a href="/home">Quit to Home</a>
+
+    <script> // initialize game
+      accuse_buttons = document.getElementsByName("accuse-button");
+
+      if ('{{ order[0] }}' === '{{ user }}') {
+        for (i = 0; i < accuse_buttons.length; i++) {
+          if (accuse_buttons[i].hasAttribute("disabled")) {
+            accuse_buttons[i].removeAttribute("disabled");
+          }
+        }
+
+        const html = `
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+          It is your turn to accuse someone
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>`;
+        let voteresult = document.querySelector("#vote-result");    // show the alert containing the vote result
+        voteresult.innerHTML = html;
+      }
+      else {
+        for (i = 0; i < accuse_buttons.length; i++) {
+          accuse_buttons[i].setAttribute("disabled", "");
+        }
+      }
+
+      player_names = document.getElementsByName("player-name");
+      for (i = 0; i < player_names.length; i++) {
+        if (player_names[i].innerHTML === data.current) {
+          // console.log("transformed: " + player_name.innerHTML);
+          player_names[i].innerHTML = '<strong>' + player_names[i].innerHTML + '</strong>';
+          // console.log("to: " + player_name.innerHTML);
+        }
+        else if (player_names[i].innerHTML.startsWith("<strong>")) {
+          player_names[i].innerHTML = player_names[i].innerText;
+        }
+      }
+    </script>
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->
