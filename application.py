@@ -232,7 +232,7 @@ def endgame():
 	game = request.args['game']
 	user = request.args['user']
 	print(games[game], file=sys.stderr)
-	return render_template('endgame.html', order=games[game]['order'], user=user, game_id=game, role=games[game][user], location=games[game]['location'])
+	return render_template('endgame.html', order=games[game]['order'], user=user, game_id=game, role=games[game]['players'][user], location=games[game]['location'])
 
 @application.route("/pushertest/<name>")
 def pushertest(name):
