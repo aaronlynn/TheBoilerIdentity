@@ -3,11 +3,21 @@
   max-width: 500px;
   padding: 30px;
   margin-left: auto;
+<<<<<<< HEAD
   margin-right: auto;
+=======
+>>>>>>> 7dd02d0486c2688e67861a3bba93d7949772a974
 }
 
 .two-column {
   -webkit-columns: 2; /* Chrome, Safari, Opera */
   -moz-columns: 2; /* Firefox */
   columns: 2;
+}
+
+.scrollable-list {
+    max-height: 300px;
+    margin-bottom: 10px;
+    overflow:scroll;
+    -webkit-overflow-scrolling: touch;
 }
