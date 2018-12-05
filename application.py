@@ -162,7 +162,7 @@ def accuse():
 	if accuser in games[game]['has_accused']:		# if they are in the list of people that have accused don't
 		return "You've already accused this round!"	# allow them to accuse and send the message that they've accused
 
-	games[game]['has_accused'].appnend(accuser)
+	games[game]['has_accused'].append(accuser)
 	games[game]['vote'] = {'accused': accused, 'accuser': accuser, 'for': 0, 'against': 0} # starts up a vote
 
 	# print(accuser + " has accused " + accused + " in game: " + game, file=sys.stderr)
