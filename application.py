@@ -12,6 +12,7 @@ from locations import *
 from purduelocations import *
 import sys
 import urllib
+from time import sleep
 
 pusher = Pusher(
   app_id='662419',
@@ -50,7 +51,8 @@ def home():
 		if 'name' not in request.args:
 			return render_template('index.html')
 		else:
-			return redirect('/newgame?name=' + request.args['name'])
+			game = generateRoomId()
+			return redirect('/newgame?name=' + request.args['name'] + '&game=' + game)
 	if 'join' in request.args:
 		if 'name' not in request.args:
 			return render_template('index.html')
@@ -64,9 +66,11 @@ def hello(name):
 
 @application.route("/newgame")
 def newgame():
-	if 'name' not in request.args:
+	if 'name' not in request.args or 'game' not in request.args:
 		return render_template('newgame.html', response='')
-	game = generateRoomId()
+	game = request.args['game']
+
+	#TODO handle if host or guest refreshes page. Currently recreates room with same room code but no players
 
 	games[game] = {'players': {request.args['name']: ''}, 'owner': request.args['name'], 'has_accused': []}
 	return render_template('lobby.html', player=request.args['name'], game_id=game, game=games[game]['players'], is_owner=True)
@@ -74,6 +78,17 @@ def newgame():
 @application.route("/lobby")
 def lobby():
 	return render_template('lobby.html')
+
+@application.route("/leavegame")
+def leavegame():
+	game = request.args['game']
+	username = request.args['user']
+
+	if username in games[game]['players']:
+		del games[game]['players'][username]
+		pusher.trigger(game, 'leave-game', {'user': username})
+
+	return redirect(url_for('home'))
 
 @application.route("/joingame")
 def joingame():
@@ -85,7 +100,7 @@ def joingame():
 		# print("Join game name: " + urllib.parse.quote(request.args['name']), file=sys.stderr)
 		return render_template('joingame.html', name=urllib.parse.quote(request.args['name']), found_game='')
 
-	game = request.args['game']
+	game = request.args['game'].upper();
 	username = urllib.parse.unquote(request.args['name'])
 
 	if game in games:
@@ -104,6 +119,7 @@ def joingame():
 def initgame():
 	game = request.args['game']
 	userlist = list(games[game]['players'].keys())
+	#locationlist = request.args['loc']
 	if True:
 		location = random.choice(list(locations))
 	else:
@@ -134,8 +150,6 @@ def game():
 	game = request.args['game']
 	user = request.args['user']
 	if game in games:
-		#TODO game logic goes here. Send location and role to player.
-		
 		return render_template('game.html', game=games[game], game_id=game, user=user, location=games[game]['location'], role=games[game]['players'][user], players=games[game]['players'])
 
 	return redirect(url_for('home'))
