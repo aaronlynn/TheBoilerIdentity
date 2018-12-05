@@ -119,6 +119,7 @@ def joingame():
 def initgame():
 	game = request.args['game']
 	userlist = list(games[game]['players'].keys())
+	#locationlist = request.args['loc']
 	if True:
 		location = random.choice(list(locations))
 	else:
