@@ -193,17 +193,21 @@
           </ul>
         </div>
         <div class="col">
-          {% if role == "Spy" %}
             <h3>Locations</h3>
             <ul class="list-group scrollable-list">
               {% for location in locations %}
-                <li class="list-group-item">
-                  <button type="button" class="btn btn-outline-info active" id="player-button" data-toggle="button" aria-pressed="false" autocomplete="off" style="float: left;">{{ location }}</button>
-                  <button type="button" class="btn btn-outline-primary" id="accuse-button" onclick="guessLocation('{{ location }}');" style="float: right;">Guess</button>
-                </li>
+                {% if role == "Spy" %}
+                  <li class="list-group-item">
+                    <button type="button" class="btn btn-outline-info active" id="player-button" data-toggle="button" aria-pressed="false" autocomplete="off" style="float: left;">{{ location }}</button>
+                    <button type="button" class="btn btn-outline-primary" id="accuse-button" onclick="guessLocation('{{ location }}');" style="float: right;">Guess</button>
+                  </li>
+                {% else %}
+                  <li class="list-group-item">
+                    <button type="button" class="btn btn-outline-info active" id="player-button" data-toggle="button" aria-pressed="false" autocomplete="off" style="float: left;">{{ location }}</button>
+                  </li>
+                {% endif %}
               {% endfor %}
             </ul>
-          {% endif %}
           <!-- end of player loop -->
         </div>
       </div>
