@@ -15,6 +15,7 @@
     <script src="https://js.pusher.com/4.3/pusher.min.js"></script>
     <script>
       // Enable pusher logging - don't include this in production
+
       Pusher.logToConsole = true;
 
       var pusher = new Pusher('63cda1f62b663027a43e', {
@@ -64,16 +65,41 @@
         voteresult.innerHTML = html;
       });
 
-      channel.bind('spy-reveal', function eventHandler(data) {
-        const html = `
-          <div class="alert alert-success alert-dismissible fade show" role="alert">
-            ${data.message}
+      channel.bind('end-game', function eventHandler(data) {
+        accuse_buttons = document.getElementsByName("accuse-button");
+
+        if (data.current === '{{ user }}') {
+          for (i = 0; i < accuse_buttons.length; i++) {
+            if (accuse_buttons[i].hasAttribute("disabled")) {
+              accuse_buttons[i].removeAttribute("disabled");
+            }
+          }
+
+          const html = `
+          <div class="alert alert-info alert-dismissible fade show" role="alert">
+            It is your turn to accuse someone
             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
           </div>`;
-        let voteresult = document.querySelector("#vote-result");    // show the alert containing the vote result
-        voteresult.innerHTML = html;
+          let voteresult = document.querySelector("#vote-result");    // show the alert containing the vote result
+          voteresult.innerHTML = html;
+        }
+        else {
+          for (i = 0; i < accuse_buttons.length; i++) {
+            accuse_buttons[i].setAttribute("disabled", "");
+          }
+        }
+
+        player_names = document.getElementsByName("player-name");
+        for (i = 0; i < player_names.length; i++) {
+          if (player_name.innerHTML === data.current) {
+            player_name.innerHTML = '<strong>' + player_name.innerHTML + '</strong>';
+          }
+          else if (player_name.innerHTML.startsWith("<strong>")) {
+            player_name.innerHTML = player_name.innerText;
+          }
+        }
       });
 
       function accuseButton(accused) {
@@ -143,12 +169,12 @@
     {% if role != 'Spy' %}
     <h3>Location: {{ location }}</h3>
     {% endif %}
-    <ul class="list-group list-group-flush">
-      {% for i in range(len(order)) %}
-        {% if order[i] != user %}
-          <li class="list-group-item" id="order-{{ i }}">
-            <button type="button" class="btn btn-outline-info active" id="player-button" data-toggle="button" aria-pressed="false" autocomplete="off">{{ player }}</button>
-            <button type="button" class="btn btn-outline-primary" id="accuse-button" onclick="accuseButton('{{ player }}');">Accuse</button>
+    <ul class="list-group list-group-flush" id="accuse-list">
+      {% for player in order %}
+        {% if player != user %}
+          <li class="list-group-item">
+            <button type="button" class="btn btn-outline-info active" data-toggle="button" aria-pressed="false" autocomplete="off"><div name="player-name">{{ player }}</div></button>
+            <button type="button" class="btn btn-outline-primary" name="accuse-button" onclick="accuseButton('{{ player }}');">Accuse</button>
           </li>
         {% endif %}
       {% endfor %}
