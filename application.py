@@ -192,9 +192,9 @@ def vote():
 			# can maybe add more things to reveal if we want
 			won = ''
 			if games[game]['vote']['accused'] == games[game]['spy']:
-				won = 'The spy has lost! ' + games[game]['vote']['accuser'] + ' correctly guessed it was ' + games[game]['spy']
+				won = 'The spy has lost! ' + games[game]['vote']['accuser'] + ' correctly guessed it was ' + games[game]['spy'] + "!"
 			else:
-				won = 'The spy has won! It was ' + games[game]['spy']
+				won = 'The spy has won! Everyone guessed ' + games[game]['vote']['accused'] + ', but it was actually ' + games[game]['spy'] + "!"
 			pusher.trigger(game, 'vote-result', {'message': 'Vote was unanimously passed! ' + won})
 			games[game]['clock'] = False
 			time.sleep(1)
