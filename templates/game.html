@@ -158,15 +158,6 @@
     <h3>Location: {{ location }}</h3>
     {% endif %}
     <h5>Time: <div id="clock"></div></h5>
-<<<<<<< HEAD
-    <b>
-    <ul class="list-group list-group-flush">
-      {% for player in players %}
-        <li class="list-group-item">
-        <button type="button" class="btn btn-outline-info active" id="player-button" data-toggle="button" aria-pressed="false" autocomplete="off">{{ player }}</button>
-        <button type="button" class="btn btn-outline-primary" id="accuse-button" onclick="accuseButton('{{ player }}');">Accuse</button>
-        </li>
-=======
 
     <!-- loops through each player, creating a button that accuses that player -->
     <!-- TODO: probably should put these buttons in a <li>, make it so the player can't accuse themselves, -->
@@ -179,7 +170,6 @@
             <button type="button" class="btn btn-outline-primary" id="accuse-button" onclick="accuseButton('{{ player }}');" style="float: right;">Accuse</button>
           </li>
         {% endif %}
->>>>>>> 7dd02d0486c2688e67861a3bba93d7949772a974
       {% endfor %}
     </ul>
     {% if role == "Spy" %}
