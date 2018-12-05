@@ -21,11 +21,20 @@
       });
 
       var channel = pusher.subscribe("{{ game_id }}");
+
       channel.bind('join-game', function eventHandler (data) {
         const html = `<li class="list-group-item">${data.user}</li>`;
         let list = document.querySelector("#players");
         list.innerHTML += html;
       });
+
+      //check the html stuff here, not sure if correct
+      channel.bind('leave-game', function eventHandler (data) {
+        const html = `<li class="list-group-item">${data.user}</li>`;
+        let list = document.querySelector("#players");
+        list.innerHTML -= html;
+        setTimeout(location.reload.bind(location), 1000);
+      })
 
       channel.bind('start-game', function eventHandler (data) {
         window.location.replace("/game?game={{ game_id }}&user={{ player }}")
@@ -55,7 +64,7 @@
           {% endif %}
         </div>
         <div class="form-group col-sm-6">
-          <a class="btn btn-lg btn-block btn-outline-secondary" href="/" role="button">Back</a>
+          <a class="btn btn-lg btn-block btn-outline-secondary" href="/leavegame?user={{ player }}&game={{ game_id }}" role="button">Back</a>
         </div>
       </div>
     </form>
