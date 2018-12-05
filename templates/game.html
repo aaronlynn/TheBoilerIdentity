@@ -158,41 +158,31 @@
     <h3>Location: {{ location }}</h3>
     {% endif %}
     <h5>Time: <div id="clock"></div></h5>
-<<<<<<< HEAD
 
     <!-- loops through each player, creating a button that accuses that player -->
     <!-- TODO: probably should put these buttons in a <li>, make it so the player can't accuse themselves, -->
     <!--       and make it so the player can mark off other players they don't think are the spy           -->
     <ul class="two-column list-group">
       {% for player in players %}
-        <!-- onclick attribute triggers the accuse function declared earlier on, passing in the player name -->
-        <li class="list-group-item"><button type="button" class="btn btn-block btn-primary" id="accuse-button" onclick="accuseButton('{{ player }}');">Accuse {{ player }}</button></li>
-      {% endfor %}
-    </ul>
-=======
-    <b>
-    <ul class="list-group list-group-flush">
-      {% for player in players %}
         {% if player != user %}
           <li class="list-group-item">
-            <button type="button" class="btn btn-outline-info active" id="player-button" data-toggle="button" aria-pressed="false" autocomplete="off">{{ player }}</button>
-            <button type="button" class="btn btn-outline-primary" id="accuse-button" onclick="accuseButton('{{ player }}');">Accuse</button>
+            <button type="button" class="btn btn-outline-info active" id="player-button" data-toggle="button" aria-pressed="false" autocomplete="off" style="float: left;">{{ player }}</button>
+            <button type="button" class="btn btn-outline-primary" id="accuse-button" onclick="accuseButton('{{ player }}');" style="float: right;">Accuse</button>
           </li>
         {% endif %}
       {% endfor %}
     </ul>
     {% if role == "Spy" %}
       <h3>Locations</h3>
-      <ul class="list-group list-group-flush">
+      <ul class="two-column list-group scrollable-list">
         {% for location in locations %}
           <li class="list-group-item">
-          <button type="button" class="btn btn-outline-info active" id="player-button" data-toggle="button" aria-pressed="false" autocomplete="off">{{ location }}</button>
-          <button type="button" class="btn btn-outline-primary" id="accuse-button" onclick="guessLocation('{{ location }}');">Guess</button>
+            <button type="button" class="btn btn-outline-info active" id="player-button" data-toggle="button" aria-pressed="false" autocomplete="off" style="float: left;">{{ location }}</button>
+            <button type="button" class="btn btn-outline-primary" id="accuse-button" onclick="guessLocation('{{ location }}');" style="float: right;">Guess</button>
           </li>
         {% endfor %}
       </ul>
     {% endif %}
->>>>>>> 6504d4333d38bef5a7ecf5624df9164e5105317b
     <!-- end of player loop -->
 
     <a href="/home">Quit to Home</a>
