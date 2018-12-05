@@ -150,7 +150,7 @@ def initgame():
 		games[game]['players'][user] = role
 
 	pusher.trigger(game, 'start-game', {})
-	startClock(game, minutes=1)
+	startClock(game, minutes=.5)
 
 @application.route("/game")
 def game():
@@ -208,7 +208,7 @@ def vote():
 				startClock(game, minutes=8)
 			else:
 				games[game]['current'] = (games[game]['current'] + 1) % len(games[game]['players'])
-				pusher.trigger(game, 'end-game', {'current': games[game]['order'][game[games['current']]]})
+				pusher.trigger(game, 'end-game', {'current': games[game]['order'][ games[game]['current'] ]})
 	# vote isn't done, do nothing
 	return ''
 
@@ -231,7 +231,6 @@ def guess():
 def endgame():
 	game = request.args['game']
 	user = request.args['user']
-	print(games[game], file=sys.stderr)
 	return render_template('endgame.html', order=games[game]['order'], user=user, game_id=game, role=games[game]['players'][user], location=games[game]['location'])
 
 @application.route("/pushertest/<name>")
