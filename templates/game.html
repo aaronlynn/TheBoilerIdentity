@@ -126,12 +126,14 @@
     {% endif %}
     <h5>Time: <div id="clock"></div></h5>
     <b>
-    {% for player in players %}
-      <button type="button" class="btn btn-info" id="player-button" data-toggle="button" aria-pressed="false" autocomplete="off">{{ player }}</button>
-    {% endfor %}  </b>
-    {% for player in players %}
-      <button type="button" class="btn btn-primary" id="accuse-button" onclick="accuseButton('{{ player }}');">Accuse {{ player }}</button>
-    {% endfor %}
+    <ul class="list-group list-group-flush">
+      {% for player in players %}
+        <li class="list-group-item">
+        <button type="button" class="btn btn-outline-info active" id="player-button" data-toggle="button" aria-pressed="false" autocomplete="off">{{ player }}</button>
+        <button type="button" class="btn btn-outline-primary" id="accuse-button" onclick="accuseButton('{{ player }}');">Accuse</button>
+        </li>
+      {% endfor %}  </b>
+    </ul>
     <!-- end of player loop -->
 
     <a href="/home">Quit to Home</a>
