@@ -51,6 +51,7 @@ def startClock(game, minutes=1):
 			order.append(user)
 			userlist.remove(user)
 		games[game]['order'] = order
+		games[game]['current'] = 0
 		pusher.trigger(game, 'end-game', {})
 
 @application.route("/")
@@ -149,7 +150,7 @@ def initgame():
 		games[game]['players'][user] = role
 
 	pusher.trigger(game, 'start-game', {})
-	startClock(game, minutes=8)
+	startClock(game, minutes=1)
 
 @application.route("/game")
 def game():
@@ -202,8 +203,12 @@ def vote():
 			# the vote failed, reset it
 			pusher.trigger(game, 'vote-result', {'message': 'Vote failed ' + str(games[game]['vote']['for']) + ' for, ' + str(games[game]['vote']['against']) + ' against'}) 
 			games[game]['vote'] = {}
-			games[game]['clock'] = True
-			startClock(game, minutes=8)
+			if 'order' not in games[game]:
+				games[game]['clock'] = True
+				startClock(game, minutes=8)
+			else:
+				games[game]['current'] = (games[game]['current'] + 1) % len(games[game]['players'])
+				pusher.trigger(game, 'end-game', {'current': games[game]['order'][game[games['current']]]})
 	# vote isn't done, do nothing
 	return ''
 
@@ -224,7 +229,10 @@ def guess():
 
 @application.route("/endgame")
 def endgame():
-	return render_template('endgame.html', order=games[request.args['game']]['order'], user=request.args['user'])
+	game = request.args['game']
+	user = request.args['user']
+	print(games[game], file=sys.stderr)
+	return render_template('endgame.html', order=games[game]['order'], user=user, game_id=game, role=games[game][user], location=games[game]['location'])
 
 @application.route("/pushertest/<name>")
 def pushertest(name):

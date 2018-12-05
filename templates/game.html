@@ -84,6 +84,10 @@
         voteresult.innerHTML = html;
       });
 
+      channel.bind('end-game', function eventHandler (data) {
+        window.location.replace("/endgame?game={{ game_id }}&user={{ user }}")
+      });
+
       function accuseButton(accused) {
         // console.log(accused);
         var xhr = new XMLHttpRequest();
