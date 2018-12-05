@@ -150,7 +150,7 @@ def game():
 	game = request.args['game']
 	user = request.args['user']
 	if game in games:
-		return render_template('game.html', game=games[game], game_id=game, user=user, location=games[game]['location'], role=games[game]['players'][user], players=games[game]['players'])
+		return render_template('game.html', game=games[game], game_id=game, user=user, location=games[game]['location'], role=games[game]['players'][user], players=games[game]['players'], locations=list(locations))
 
 	return redirect(url_for('home'))
 
@@ -191,6 +191,18 @@ def vote():
 			pusher.trigger(game, 'vote-result', {'message': 'Vote failed ' + str(games[game]['vote']['for']) + ' for, ' + str(games[game]['vote']['against']) + ' against'}) 
 			games[game]['vote'] = {}
 	# vote isn't done, do nothing
+	return ''
+
+@application.route("/guess")
+def guess():
+	game = request.args['game']
+	location = request.args['location']
+	message = 'The Spy, ' + games[game]['spy'] + ', guessed the location was ' + location + ' and they were '
+	if location == games[game]['location']:
+		pusher.trigger(game, 'spy-reveal', {'message': message + ' correct! The Spy wins!'})
+	else:
+		pusher.trigger(game, 'spy-reveal', {'message': message + ' incorrect! The Spy loses!'})
+		
 	return ''
 
 @application.route("/pushertest/<name>")

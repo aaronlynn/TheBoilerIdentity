@@ -71,6 +71,18 @@
         voteresult.innerHTML = html;
       });
 
+      channel.bind('spy-reveal', function eventHandler(data) {
+        const html = `
+          <div class="alert alert-success alert-dismissible fade show" role="alert">
+            ${data.message}
+            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+              <span aria-hidden="true">&times;</span>
+            </button>
+          </div>`;
+        let voteresult = document.querySelector("#vote-result");    // show the alert containing the vote result
+        voteresult.innerHTML = html;
+      });
+
       function accuseButton(accused) {
         // console.log(accused);
         var xhr = new XMLHttpRequest();
@@ -94,16 +106,23 @@
       }
 
       function accuseFor() {
-        console.log("{{ user }} is for");
+        // console.log("{{ user }} is for");
         var xhr = new XMLHttpRequest();
         xhr.open('GET', "/vote?game={{ game_id }}&persuasion=for", true);
         xhr.send();
       }
 
       function accuseAgainst() {
-        console.log("{{ user }} is against");
+        // console.log("{{ user }} is against");
         var xhr = new XMLHttpRequest();
         xhr.open('GET', "/vote?game={{ game_id }}&persuasion=against", true);
+        xhr.send();
+      }
+
+      function guessLocation(location) {
+        // console.log("{{ user }} is for");
+        var xhr = new XMLHttpRequest();
+        xhr.open('GET', "/guess?game={{ game_id }}&location=" + location, true);
         xhr.send();
       }
     </script>
@@ -145,8 +164,19 @@
         <button type="button" class="btn btn-outline-info active" id="player-button" data-toggle="button" aria-pressed="false" autocomplete="off">{{ player }}</button>
         <button type="button" class="btn btn-outline-primary" id="accuse-button" onclick="accuseButton('{{ player }}');">Accuse</button>
         </li>
-      {% endfor %}  </b>
+      {% endfor %}
     </ul>
+    {% if role == "Spy" %}
+      <h3>Locations</h3>
+      <ul class="list-group list-group-flush">
+        {% for location in locations %}
+          <li class="list-group-item">
+          <button type="button" class="btn btn-outline-info active" id="player-button" data-toggle="button" aria-pressed="false" autocomplete="off">{{ location }}</button>
+          <button type="button" class="btn btn-outline-primary" id="accuse-button" onclick="guessLocation('{{ location }}');">Guess</button>
+          </li>
+        {% endfor %}
+      </ul>
+    {% endif %}
     <!-- end of player loop -->
 
     <a href="/home">Quit to Home</a>
