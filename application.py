@@ -100,7 +100,7 @@ def joingame():
 		# print("Join game name: " + urllib.parse.quote(request.args['name']), file=sys.stderr)
 		return render_template('joingame.html', name=urllib.parse.quote(request.args['name']), found_game='')
 
-	game = request.args['game']
+	game = request.args['game'].upper();
 	username = urllib.parse.unquote(request.args['name'])
 
 	if game in games:
