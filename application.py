@@ -42,7 +42,16 @@ def startClock(game, minutes=1):
 		pusher.trigger(game, 'clock', {'time': time.strftime("%M:%S", time.gmtime(60 * minutes - seconds))})
 		time.sleep(1)
 		seconds = int(time.time() - time_start)
-	pusher.trigger(game, 'end-game', {})
+	if seconds > 60 * minutes:
+		# determine accusation order
+		userlist = list(games[game]['players'])
+		order = []
+		while len(userlist) > 0:
+			user = random.choice(userlist)
+			order.append(user)
+			userlist.remove(user)
+		games[game]['order'] = order
+		pusher.trigger(game, 'end-game', {})
 
 @application.route("/")
 @application.route("/home")
@@ -203,7 +212,7 @@ def guess():
 	game = request.args['game']
 	location = request.args['location']
 	games[game]['clock'] = False
-	message = 'The Spy, ' + games[game]['spy'] + ', guessed the location was ' + location + ' and they were '
+	message = 'The Spy, ' + games[game]['spy'] + ', guessed the location was ' + location + ' and they were'
 	if location == games[game]['location']:
 		pusher.trigger(game, 'spy-reveal', {'message': message + ' correct! The Spy wins!'})
 	else:
@@ -212,6 +221,10 @@ def guess():
 	del games[game]
 
 	return ''
+
+@application.route("/endgame")
+def endgame():
+	return render_template('endgame.html', order=games[request.args['game']]['order'], user=request.args['user'])
 
 @application.route("/pushertest/<name>")
 def pushertest(name):
