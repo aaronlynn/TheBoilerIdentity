@@ -174,9 +174,9 @@ def vote():
 	game = request.args['game']
 	persuasion = request.args['persuasion'] # one of two values 'for' or 'against'
 	games[game]['vote'][persuasion] += 1 	# add the vote to the current vote in the game
-	if games[game]['vote']['for'] + games[game]['vote']['against'] == len(games[game]['players']):
+	if games[game]['vote']['for'] + games[game]['vote']['against'] == len(games[game]['players']) - 1:
 		# vote is done!
-		if games[game]['vote']['for'] == len(games[game]['players']):
+		if games[game]['vote']['for'] == len(games[game]['players']) - 1:
 			# unanimous, reveal spy, also the game is over one way or another
 			# can maybe add more things to reveal if we want
 			won = ''
