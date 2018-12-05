@@ -125,12 +125,11 @@
     <h3>Location: {{ location }}</h3>
     {% endif %}
     <h5>Time: <div id="clock"></div></h5>
-
-    <!-- loops through each player, creating a button that accuses that player -->
-    <!-- TODO: probably should put these buttons in a <li>, make it so the player can't accuse themselves, -->
-    <!--       and make it so the player can mark off other players they don't think are the spy           -->
+    <b>
     {% for player in players %}
-      <!-- onclick attribute triggers the accuse function declared earlier on, passing in the player name -->
+      <button type="button" class="btn btn-info" id="player-button" data-toggle="button" aria-pressed="false" autocomplete="off">{{ player }}</button>
+    {% endfor %}  </b>
+    {% for player in players %}
       <button type="button" class="btn btn-primary" id="accuse-button" onclick="accuseButton('{{ player }}');">Accuse {{ player }}</button>
     {% endfor %}
     <!-- end of player loop -->
