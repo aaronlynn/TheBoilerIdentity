@@ -3,5 +3,11 @@
   max-width: 500px;
   padding: 30px;
   margin-left: auto;
-  margin-right: auto;
+  margi
+}
+
+.two-column {
+  -webkit-columns: 2; /* Chrome, Safari, Opera */
+  -moz-columns: 2; /* Firefox */
+  columns: 2;
 }

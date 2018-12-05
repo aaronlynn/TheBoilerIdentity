@@ -44,7 +44,7 @@
   <body class="text-center default-form">
     <h1>Waiting Lobby</h1>
     <h4>Lobby Code: {{ game_id }}</h4>
-    <div class="card">
+    <div class="card" style="margin-bottom: 20px;">
       <div class="card-body">
         <h3 class="card-title">Players</h3>
         <ul id="players" class="list-group list-group-flush">
@@ -54,7 +54,7 @@
         </ul>
       </div>
     </div>
-    <form class="text-center default-form">
+    <form>
       <div class="form-row">
         <div class="form-group col-sm-6">
           {% if is_owner %}
