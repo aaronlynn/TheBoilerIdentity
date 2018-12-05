@@ -173,7 +173,7 @@ def accuse():
 		return "You've already accused this round!"	# allow them to accuse and send the message that they've accused
 
 	games[game]['has_accused'].append(accuser)
-	games[game]['vote'] = {'accused': accused, 'accuser': accuser, 'for': 0, 'against': 0} # starts up a vote
+	games[game]['vote'] = {'accused': accused, 'accuser': accuser, 'for': 1, 'against': 0} # starts up a vote
 
 	# print(accuser + " has accused " + accused + " in game: " + game, file=sys.stderr)
 	pusher.trigger(game, 'accuse', {'accused': accused, 'accuser': accuser}) 
