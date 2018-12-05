@@ -38,7 +38,7 @@ def generateRoomId():
 def startClock(game, minutes=1):
 	time_start = time.time()
 	seconds = 0
-	while seconds <= 60 * minutes:
+	while seconds <= 60 * minutes and games[game]['clock']:
 		pusher.trigger(game, 'clock', {'time': time.strftime("%M:%S", time.gmtime(60 * minutes - seconds))})
 		time.sleep(1)
 		seconds = int(time.time() - time_start)
@@ -72,7 +72,7 @@ def newgame():
 
 	#TODO handle if host or guest refreshes page. Currently recreates room with same room code but no players
 
-	games[game] = {'players': {request.args['name']: ''}, 'owner': request.args['name'], 'has_accused': []}
+	games[game] = {'players': {request.args['name']: ''}, 'owner': request.args['name'], 'has_accused': [], 'clock': True}
 	return render_template('lobby.html', player=request.args['name'], game_id=game, game=games[game]['players'], is_owner=True)
 
 @application.route("/lobby")
@@ -134,7 +134,7 @@ def initgame():
 	games[game]['spy'] = spy            #set spy for game lobby
 
 	for user in userlist:
-		print(user, file=sys.stderr)
+		# print(user, file=sys.stderr)
 		role = random.choice(rolelist)
 		rolelist.remove(role)
 		games[game]['players'][user] = role
@@ -159,6 +159,7 @@ def accuse():
 	accuser = request.args['accuser']
 	accused = request.args['accused']
 	game = request.args['game']
+	games[game]['clock'] = False
 	if accuser in games[game]['has_accused']:		# if they are in the list of people that have accused don't
 		return "You've already accused this round!"	# allow them to accuse and send the message that they've accused
 
@@ -185,11 +186,15 @@ def vote():
 			else:
 				won = 'The spy has won! It was ' + games[game]['spy']
 			pusher.trigger(game, 'vote-result', {'message': 'Vote was unanimously passed! ' + won})
+			games[game]['clock'] = False
+			time.sleep(1)
 			del games[game]
 		else:
 			# the vote failed, reset it
 			pusher.trigger(game, 'vote-result', {'message': 'Vote failed ' + str(games[game]['vote']['for']) + ' for, ' + str(games[game]['vote']['against']) + ' against'}) 
 			games[game]['vote'] = {}
+			games[game]['clock'] = True
+			startClock(game, minutes=8)
 	# vote isn't done, do nothing
 	return ''
 
@@ -197,12 +202,15 @@ def vote():
 def guess():
 	game = request.args['game']
 	location = request.args['location']
+	games[game]['clock'] = False
 	message = 'The Spy, ' + games[game]['spy'] + ', guessed the location was ' + location + ' and they were '
 	if location == games[game]['location']:
 		pusher.trigger(game, 'spy-reveal', {'message': message + ' correct! The Spy wins!'})
 	else:
 		pusher.trigger(game, 'spy-reveal', {'message': message + ' incorrect! The Spy loses!'})
-		
+	time.sleep(1)
+	del games[game]
+
 	return ''
 
 @application.route("/pushertest/<name>")
