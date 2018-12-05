@@ -3,12 +3,15 @@
   max-width: 500px;
   padding: 30px;
   margin-left: auto;
+  margin-right: auto;
 }
 
 .two-column {
-  -webkit-columns: 2; /* Chrome, Safari, Opera */
-  -moz-columns: 2; /* Firefox */
-  columns: 2;
+    list-style-type: disc;
+    -webkit-columns: 2;
+    -moz-columns: 2;
+    columns: 2;
+    list-style-position: inside;
 }
 
 .scrollable-list {
