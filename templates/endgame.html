@@ -15,6 +15,7 @@
     <script src="https://js.pusher.com/4.3/pusher.min.js"></script>
     <script>
       // Enable pusher logging - don't include this in production
+
       Pusher.logToConsole = true;
 
       var pusher = new Pusher('63cda1f62b663027a43e', {
@@ -25,14 +26,25 @@
       var channel = pusher.subscribe("{{ game_id }}");
 
       channel.bind('accuse', function eventHandler(data) {
-        if ('{{ user }}' !== data.accused) {
+        if ('{{ user }}' !== data.accused && '{{ user }}' !== data.accuser) {
           const html = data.accuser + ' has accused ' + data.accused + ' of being the spy';
           // console.log(html);
           let modalbody = document.querySelector("#accused-modal-body");
           modalbody.innerHTML = html;
           $('#accused-modal').modal('show');
         }
-        else {
+        else if('{{ user }}' === data.accuser) {
+          const html = `
+            <div class="alert alert-info alert-dismissible fade show" role="alert">
+              <strong>You have accused ${data.accused} of being the spy</strong>
+              <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+                <span aria-hidden="true">&times;</span>
+              </button>
+            </div>`;
+          let voteresult = document.querySelector("#vote-result");
+          voteresult.innerHTML = html;
+        }
+        else if('{{ user }}' === data.accused) {
           const html = `
             <div class="alert alert-danger alert-dismissible fade show" role="alert">
               <strong>You have been accused by ${data.accuser} of being the spy</strong>
@@ -64,16 +76,43 @@
         voteresult.innerHTML = html;
       });
 
-      channel.bind('spy-reveal', function eventHandler(data) {
-        const html = `
-          <div class="alert alert-success alert-dismissible fade show" role="alert">
-            ${data.message}
+      channel.bind('end-game', function eventHandler(data) {
+        accuse_buttons = document.getElementsByName("accuse-button");
+
+        if (data.current === '{{ user }}') {
+          for (i = 0; i < accuse_buttons.length; i++) {
+            if (accuse_buttons[i].hasAttribute("disabled")) {
+              accuse_buttons[i].removeAttribute("disabled");
+            }
+          }
+
+          const html = `
+          <div class="alert alert-info alert-dismissible fade show" role="alert">
+            It is your turn to accuse someone
             <button type="button" class="close" data-dismiss="alert" aria-label="Close">
               <span aria-hidden="true">&times;</span>
             </button>
           </div>`;
-        let voteresult = document.querySelector("#vote-result");    // show the alert containing the vote result
-        voteresult.innerHTML = html;
+          let voteresult = document.querySelector("#vote-result");    // show the alert containing the vote result
+          voteresult.innerHTML += html;
+        }
+        else {
+          for (i = 0; i < accuse_buttons.length; i++) {
+            accuse_buttons[i].setAttribute("disabled", "");
+          }
+        }
+
+        player_names = document.getElementsByName("player-name");
+        for (i = 0; i < player_names.length; i++) {
+          if (player_names[i].innerHTML === data.current) {
+            // console.log("transformed: " + player_name.innerHTML);
+            player_names[i].innerHTML = '<strong>' + player_names[i].innerHTML + '</strong>';
+            // console.log("to: " + player_name.innerHTML);
+          }
+          else if (player_names[i].innerHTML.startsWith("<strong>")) {
+            player_names[i].innerHTML = player_names[i].innerText;
+          }
+        }
       });
 
       function accuseButton(accused) {
@@ -143,18 +182,58 @@
     {% if role != 'Spy' %}
     <h3>Location: {{ location }}</h3>
     {% endif %}
-    <ul class="list-group list-group-flush">
-      {% for i in range(len(order)) %}
-        {% if order[i] != user %}
-          <li class="list-group-item" id="order-{{ i }}">
-            <button type="button" class="btn btn-outline-info active" id="player-button" data-toggle="button" aria-pressed="false" autocomplete="off">{{ player }}</button>
-            <button type="button" class="btn btn-outline-primary" id="accuse-button" onclick="accuseButton('{{ player }}');">Accuse</button>
+    <h3>Order</h3>
+    <ul class="list-group list-group-flush" id="accuse-list">
+      {% for player in order %}
+          <li class="list-group-item">
+            <button type="button" class="btn btn-outline-info active" data-toggle="button" aria-pressed="false" autocomplete="off"><div name="player-name">{{ player }}</div></button>
+            {% if player != user %}
+              <button type="button" class="btn btn-outline-primary" name="accuse-button" onclick="accuseButton('{{ player }}');">Accuse</button>
+            {% endif %}
           </li>
-        {% endif %}
       {% endfor %}
     </ul>
 
     <a href="/home">Quit to Home</a>
+
+    <script> // initialize game
+      accuse_buttons = document.getElementsByName("accuse-button");
+
+      if ('{{ order[0] }}' === '{{ user }}') {
+        for (i = 0; i < accuse_buttons.length; i++) {
+          if (accuse_buttons[i].hasAttribute("disabled")) {
+            accuse_buttons[i].removeAttribute("disabled");
+          }
+        }
+
+        const html = `
+        <div class="alert alert-info alert-dismissible fade show" role="alert">
+          It is your turn to accuse someone
+          <button type="button" class="close" data-dismiss="alert" aria-label="Close">
+            <span aria-hidden="true">&times;</span>
+          </button>
+        </div>`;
+        let voteresult = document.querySelector("#vote-result");    // show the alert containing the vote result
+        voteresult.innerHTML = html;
+      }
+      else {
+        for (i = 0; i < accuse_buttons.length; i++) {
+          accuse_buttons[i].setAttribute("disabled", "");
+        }
+      }
+
+      player_names = document.getElementsByName("player-name");
+      for (i = 0; i < player_names.length; i++) {
+        if (player_names[i].innerHTML === data.current) {
+          // console.log("transformed: " + player_name.innerHTML);
+          player_names[i].innerHTML = '<strong>' + player_names[i].innerHTML + '</strong>';
+          // console.log("to: " + player_name.innerHTML);
+        }
+        else if (player_names[i].innerHTML.startsWith("<strong>")) {
+          player_names[i].innerHTML = player_names[i].innerText;
+        }
+      }
+    </script>
 
     <!-- Optional JavaScript -->
     <!-- jQuery first, then Popper.js, then Bootstrap JS -->

@@ -51,6 +51,7 @@ def startClock(game, minutes=1):
 			order.append(user)
 			userlist.remove(user)
 		games[game]['order'] = order
+		games[game]['current'] = 0
 		pusher.trigger(game, 'end-game', {})
 
 @application.route("/")
@@ -149,7 +150,7 @@ def initgame():
 		games[game]['players'][user] = role
 
 	pusher.trigger(game, 'start-game', {})
-	startClock(game, minutes=8)
+	startClock(game, minutes=.5)
 
 @application.route("/game")
 def game():
@@ -191,9 +192,9 @@ def vote():
 			# can maybe add more things to reveal if we want
 			won = ''
 			if games[game]['vote']['accused'] == games[game]['spy']:
-				won = 'The spy has lost! ' + games[game]['vote']['accuser'] + ' correctly guessed it was ' + games[game]['spy']
+				won = 'The spy has lost! ' + games[game]['vote']['accuser'] + ' correctly guessed it was ' + games[game]['spy'] + "!"
 			else:
-				won = 'The spy has won! It was ' + games[game]['spy']
+				won = 'The spy has won! Everyone guessed ' + games[game]['vote']['accused'] + ', but it was actually ' + games[game]['spy'] + "!"
 			pusher.trigger(game, 'vote-result', {'message': 'Vote was unanimously passed! ' + won})
 			games[game]['clock'] = False
 			time.sleep(1)
@@ -202,8 +203,12 @@ def vote():
 			# the vote failed, reset it
 			pusher.trigger(game, 'vote-result', {'message': 'Vote failed ' + str(games[game]['vote']['for']) + ' for, ' + str(games[game]['vote']['against']) + ' against'}) 
 			games[game]['vote'] = {}
-			games[game]['clock'] = True
-			startClock(game, minutes=8)
+			if 'order' not in games[game]:
+				games[game]['clock'] = True
+				startClock(game, minutes=8)
+			else:
+				games[game]['current'] = (games[game]['current'] + 1) % len(games[game]['players'])
+				pusher.trigger(game, 'end-game', {'current': games[game]['order'][ games[game]['current'] ]})
 	# vote isn't done, do nothing
 	return ''
 
@@ -224,7 +229,23 @@ def guess():
 
 @application.route("/endgame")
 def endgame():
-	return render_template('endgame.html', order=games[request.args['game']]['order'], user=request.args['user'])
+	game = request.args['game']
+	user = request.args['user']
+	return render_template('endgame.html', order=games[game]['order'], user=user, game_id=game, role=games[game]['players'][user], location=games[game]['location'])
+
+@application.route("/statistics")
+def statistics():
+	db = mysql.connector.connect(host="", user="", password="", database="")
+	cur = db.cursor()
+	cur.execute("select * from users where UserName = %s", (username,))
+
+	user = request.args['user']
+	spy_wins = "-/-"
+	non_spy_wins = "-/-"
+	game_count = 32
+	score = 2
+
+	return render_template('statistics.html', spy_wins=spy_wins, non_spy_wins=non_spy_wins, total_games=game_count, score=score)
 
 @application.route("/pushertest/<name>")
 def pushertest(name):
