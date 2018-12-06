@@ -36,7 +36,7 @@ def generateRoomId():
 			returned += random.choice(string.ascii_uppercase)
 	return returned
 
-def startClock(game, minutes=1):
+def startClock(game, minutes=8):
 	time_start = time.time()
 	seconds = 0
 	while seconds <= 60 * minutes and games[game]['clock']:
