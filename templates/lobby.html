@@ -38,7 +38,7 @@
           but = document.querySelector("#opt-spy");
           but.innerHTML = `<input type="radio" value="spy" name="options" autocomplete="off" checked> Spyfall Locations`;
           but = document.querySelector("#opt-pur");
-          but.innerHTML = `<input type="radio" value="spy" name="options" autocomplete="off" checked> Purdue Locations`;
+          but.innerHTML = `<input type="radio" value="pur" name="options" autocomplete="off"> Purdue Locations`;
         }
       })
 
@@ -83,16 +83,17 @@
           <label class="btn btn-secondary active" id="opt-spy">
             <input type="radio" value="spy" name="options" autocomplete="off" checked> Spyfall Locations
           </label>
-          <label class="btn btn-secondary" id="opt-spy">
-            <input type="radio" value="pur" name="options" id="opt-pur" autocomplete="off"> Purdue Locations
+          <label class="btn btn-secondary" id="opt-pur">
+            <input type="radio" value="pur" name="options" autocomplete="off"> Purdue Locations
           </label>
 
         {% else %}
+          <input type="hidden" name="game" value="{{ game_id }}">
           <label class="btn btn-secondary" id="opt-spy">
-            <input type="radio" name="options" id="opt-spy" autocomplete="off" disabled> Spyfall Locations
+            <input type="radio" name="options" autocomplete="off" disabled> Spyfall Locations
           </label>
-          <label class="btn btn-secondary" id="opt-spy">
-            <input type="radio" name="options" id="opt-pur" autocomplete="off" disabled> Purdue Locations
+          <label class="btn btn-secondary" id="opt-pur">
+            <input type="radio" name="options" autocomplete="off" disabled> Purdue Locations
           </label>
         {% endif %}
       </div>
