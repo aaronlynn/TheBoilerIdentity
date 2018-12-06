@@ -13,6 +13,7 @@ from purduelocations import *
 import sys
 import urllib
 from time import sleep
+import mysql.connector
 
 pusher = Pusher(
   app_id='662419',
@@ -76,11 +77,24 @@ def hello(name):
 
 @application.route("/newgame")
 def newgame():
+
 	if 'name' not in request.args or 'game' not in request.args:
 		return render_template('newgame.html', response='')
 	game = request.args['game']
 
 	#TODO handle if host or guest refreshes page. Currently recreates room with same room code but no players
+
+	#create user in database if one doesn't exist
+	db = mysql.connector.connect(host='tbi-inst1.cbas20bxl7ak.us-east-2.rds.amazonaws.com', user='root', password='password', database='tbidata') 
+	dbuser = request.args['name']
+	dbcursor = db.cursor()
+	dbcursor.execute('SELECT COUNT(name) FROM tbidata.scores WHERE name = "' + dbuser + '";')
+	exists = dbcursor.fetchone()
+
+	if exists[0] < 1:
+		dbcursor.execute('INSERT INTO tbidata.scores (name) VALUES ("' + dbuser + '");')
+		db.commit()
+	#end db
 
 	games[game] = {'players': {request.args['name']: ''}, 'owner': request.args['name'], 'has_accused': [], 'clock': True}
 	return render_template('lobby.html', player=request.args['name'], game_id=game, game=games[game]['players'], is_owner=True)
@@ -112,6 +126,18 @@ def joingame():
 
 	game = request.args['game'].upper();
 	username = urllib.parse.unquote(request.args['name'])
+
+	#create user in database if one doesn't exist
+	db = mysql.connector.connect(host='tbi-inst1.cbas20bxl7ak.us-east-2.rds.amazonaws.com', user='root', password='password', database='tbidata') 
+	dbuser = username
+	dbcursor = db.cursor()
+	dbcursor.execute('SELECT COUNT(name) FROM tbidata.scores WHERE name = "' + dbuser + '";')
+	exists = dbcursor.fetchone()
+
+	if exists[0] < 1:
+		dbcursor.execute('INSERT INTO tbidata.scores (name) VALUES ("' + dbuser + '");')
+		db.commit()
+	#end db
 
 	if game in games:
 		if username in games[game]['players']:
@@ -150,7 +176,7 @@ def initgame():
 		games[game]['players'][user] = role
 
 	pusher.trigger(game, 'start-game', {})
-	startClock(game, minutes=1)
+	startClock(game, minutes=.5)
 
 @application.route("/game")
 def game():
@@ -185,6 +211,13 @@ def vote():
 	game = request.args['game']
 	persuasion = request.args['persuasion'] # one of two values 'for' or 'against'
 	games[game]['vote'][persuasion] += 1 	# add the vote to the current vote in the game
+
+	#get spy from db
+	db = mysql.connector.connect(host='tbi-inst1.cbas20bxl7ak.us-east-2.rds.amazonaws.com', user='root', password='password', database='tbidata') 
+	dbspy = games[game]['spy']
+	dbaccuser = games[game]['vote']['accuser']
+	dbcursor = db.cursor()
+
 	if games[game]['vote']['for'] + games[game]['vote']['against'] == len(games[game]['players']) - 1:
 		# vote is done!
 		if games[game]['vote']['for'] == len(games[game]['players']) - 1:
@@ -192,13 +225,24 @@ def vote():
 			# can maybe add more things to reveal if we want
 			won = ''
 			if games[game]['vote']['accused'] == games[game]['spy']:
-				won = 'The spy has lost! ' + games[game]['vote']['accuser'] + ' correctly guessed it was ' + games[game]['spy']
+				won = 'The spy has lost! ' + games[game]['vote']['accuser'] + ' correctly guessed it was ' + games[game]['spy'] + "!"
+				#update accuser wins/spy losses
+				
+				dbcursor.execute('UPDATE tbidata.scores SET accusewins = accusewins + 1 WHERE name = "' + dbaccuser + '";')
+				db.commit()
+				dbcursor.execute('UPDATE tbidata.scores SET spylosses = spylosses + 1 WHERE name = "' + dbspy + '";')
+				db.commit()
 			else:
-				won = 'The spy has won! It was ' + games[game]['spy']
+				won = 'The spy has won! Everyone guessed ' + games[game]['vote']['accused'] + ', but it was actually ' + games[game]['spy'] + "!"
+
+				#update spy wins/accuser losses
+				dbcursor.execute('UPDATE tbidata.scores SET spywins = spywins + 1 WHERE name = "' + dbspy + '";')
+				db.commit()
+				dbcursor.execute('UPDATE tbidata.scores SET accuselosses = accuselosses + 1 WHERE name = "' + dbaccuser + '";')
+				db.commit()
 			pusher.trigger(game, 'vote-result', {'message': 'Vote was unanimously passed! ' + won})
 			games[game]['clock'] = False
-			time.sleep(1)
-			del games[game]
+			cleanupgame(game)
 		else:
 			# the vote failed, reset it
 			pusher.trigger(game, 'vote-result', {'message': 'Vote failed ' + str(games[game]['vote']['for']) + ' for, ' + str(games[game]['vote']['against']) + ' against'}) 
@@ -208,7 +252,7 @@ def vote():
 				startClock(game, minutes=8)
 			else:
 				games[game]['current'] = (games[game]['current'] + 1) % len(games[game]['players'])
-				pusher.trigger(game, 'end-game', {'current': games[game]['order'][game[games['current']]]})
+				pusher.trigger(game, 'end-game', {'current': games[game]['order'][ games[game]['current'] ]})
 	# vote isn't done, do nothing
 	return ''
 
@@ -217,28 +261,65 @@ def guess():
 	game = request.args['game']
 	location = request.args['location']
 	games[game]['clock'] = False
+
+	#get user from db
+	db = mysql.connector.connect(host='tbi-inst1.cbas20bxl7ak.us-east-2.rds.amazonaws.com', user='root', password='password', database='tbidata') 
+	dbspy = games[game]['spy']
+	dbcursor = db.cursor()
+
 	message = 'The Spy, ' + games[game]['spy'] + ', guessed the location was ' + location + ' and they were'
 	if location == games[game]['location']:
 		pusher.trigger(game, 'spy-reveal', {'message': message + ' correct! The Spy wins!'})
-	else:
-		pusher.trigger(game, 'spy-reveal', {'message': message + ' incorrect! The Spy loses!'})
-	time.sleep(1)
-	del games[game]
 
+		#update spy wins
+		dbcursor.execute('UPDATE tbidata.scores SET spywins = spywins + 1 WHERE name = "' + dbspy + '";')
+		db.commit()
+	else:
+		#update spy losses
+		dbcursor.execute('UPDATE tbidata.scores SET spylosses = spylosses + 1 WHERE name = "' + dbspy + '";')
+		db.commit()
+
+		pusher.trigger(game, 'spy-reveal', {'message': message + ' incorrect! The Spy loses!'})
+	cleanupgame(game)
 	return ''
 
 @application.route("/endgame")
 def endgame():
 	game = request.args['game']
 	user = request.args['user']
-	print(games[game], file=sys.stderr)
+
 	return render_template('endgame.html', order=games[game]['order'], user=user, game_id=game, role=games[game]['players'][user], location=games[game]['location'])
 
-@application.route("/pushertest/<name>")
-def pushertest(name):
-	pusher.trigger('my-channel', 'my-event', {'message': 'hello ' + name})
-	return "Pushed " + name
+def cleanupgame(game):
+	db = mysql.connector.connect(host='tbi-inst1.cbas20bxl7ak.us-east-2.rds.amazonaws.com', user='root', password='password', database='tbidata') 
+	dbcursor = db.cursor()
+	for dbuser in list(games[game]['players']):
+		dbcursor.execute('SELECT spywins FROM tbidata.scores WHERE name = "' + dbuser + '";')
+		spywins = dbcursor.fetchone()[0]
 
-@application.route("/pusherpage")
-def pusherpage():
-	return render_template("pushertest.html")
+		dbcursor.execute('SELECT spylosses FROM tbidata.scores WHERE name = "' + dbuser + '";')
+		spylosses = dbcursor.fetchone()[0]
+
+		dbcursor.execute('SELECT accusewins FROM tbidata.scores WHERE name = "' + dbuser + '";')
+		accusewins = dbcursor.fetchone()[0]
+
+		dbcursor.execute('SELECT accuselosses FROM tbidata.scores WHERE name = "' + dbuser + '";')
+		accuselosses = dbcursor.fetchone()[0]
+
+		totalscore = (spywins * 1000) + (spylosses * -500) + (accusewins * 500) + (accuselosses * -1000)
+		dbcursor.execute('UPDATE tbidata.scores SET totalscore = ' + str(totalscore) + ' WHERE name = "' + dbuser + '";')
+		db.commit()
+
+	time.sleep(1)
+	del games[game]
+
+
+@application.route("/statistics")
+def statistics():
+#	spy_wins = "-/-"
+#	non_spy_wins = "-/-"
+#	game_count = 32
+#	score = 2
+	rows = []
+
+	return render_template('statistics.html', rows=rows)
