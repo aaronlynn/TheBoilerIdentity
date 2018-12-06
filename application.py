@@ -225,6 +225,11 @@ def vote():
 			won = ''
 			if games[game]['vote']['accused'] == games[game]['spy']:
 				won = 'The spy has lost! ' + games[game]['vote']['accuser'] + ' correctly guessed it was ' + games[game]['spy'] + "!"
+
+				#update accuser wins
+				dbaccuser = games[game]['vote']['accuser']
+				dbcursor.execute('UPDATE tbidata.scores SET accusewins = accusewins + 1 WHERE name = "' + dbaccuser + '";')
+				db.commit()
 			else:
 				won = 'The spy has won! Everyone guessed ' + games[game]['vote']['accused'] + ', but it was actually ' + games[game]['spy'] + "!"
 
@@ -267,6 +272,10 @@ def guess():
 		dbcursor.execute('UPDATE tbidata.scores SET spywins = spywins + 1 WHERE name = "' + dbspy + '";')
 		db.commit()
 	else:
+		#update spy losses
+		dbcursor.execute('UPDATE tbidata.scores SET spylosses = spylosses + 1 WHERE name = "' + dbspy + '";')
+		db.commit()
+
 		pusher.trigger(game, 'spy-reveal', {'message': message + ' incorrect! The Spy loses!'})
 	time.sleep(1)
 	del games[game]
