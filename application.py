@@ -242,8 +242,7 @@ def vote():
 				db.commit()
 			pusher.trigger(game, 'vote-result', {'message': 'Vote was unanimously passed! ' + won})
 			games[game]['clock'] = False
-			time.sleep(1)
-			del games[game]
+			cleanupgame(game)
 		else:
 			# the vote failed, reset it
 			pusher.trigger(game, 'vote-result', {'message': 'Vote failed ' + str(games[game]['vote']['for']) + ' for, ' + str(games[game]['vote']['against']) + ' against'}) 
@@ -281,9 +280,7 @@ def guess():
 		db.commit()
 
 		pusher.trigger(game, 'spy-reveal', {'message': message + ' incorrect! The Spy loses!'})
-	time.sleep(1)
-	del games[game]
-
+	cleanupgame(game)
 	return ''
 
 @application.route("/endgame")
@@ -291,7 +288,9 @@ def endgame():
 	game = request.args['game']
 	user = request.args['user']
 
+	return render_template('endgame.html', order=games[game]['order'], user=user, game_id=game, role=games[game]['players'][user], location=games[game]['location'])
 
+def cleanupgame(game):
 	db = mysql.connector.connect(host='tbi-inst1.cbas20bxl7ak.us-east-2.rds.amazonaws.com', user='root', password='password', database='tbidata') 
 	dbuser = user
 	dbcursor = db.cursor()
@@ -312,17 +311,18 @@ def endgame():
 	dbcursor.execute('UPDATE tbidata.scores SET totalscore = ' + totalscore + ' WHERE name = "' + dbuser + '";')
 	db.commit()
 
-	return render_template('endgame.html', order=games[game]['order'], user=user, game_id=game, role=games[game]['players'][user], location=games[game]['location'])
+	time.sleep(1)
+	del games[game]
+
 
 @application.route("/statistics")
 def statistics():
-	user = request.args['user']
 #	spy_wins = "-/-"
 #	non_spy_wins = "-/-"
 #	game_count = 32
 #	score = 2
 
-	return render_template('statistics.html', spy_wins=spy_wins, non_spy_wins=non_spy_wins, total_games=game_count, score=score, user=user)
+	return render_template('statistics.html', rows=rows)
 
 @application.route("/pushertest/<name>")
 def pushertest(name):
