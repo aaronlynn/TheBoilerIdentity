@@ -88,11 +88,11 @@ def newgame():
 	db = mysql.connector.connect(host='tbi-inst1.cbas20bxl7ak.us-east-2.rds.amazonaws.com', user='root', password='password', database='tbidata') 
 	dbuser = request.args['name']
 	dbcursor = db.cursor()
-	dbcursor.execute('SELECT COUNT(name) FROM tbidata.scores WHERE name = "' + dbuser + '";')
+	dbcursor.execute('SELECT COUNT(name) FROM tbidata.score WHERE name = "' + dbuser + '";')
 	exists = dbcursor.fetchone()
 
 	if exists[0] < 1:
-		dbcursor.execute('INSERT INTO tbidata.scores (name) VALUES ("' + dbuser + '");')
+		dbcursor.execute('INSERT INTO tbidata.score (name) VALUES ("' + dbuser + '");')
 		db.commit()
 	#end db
 
@@ -131,11 +131,11 @@ def joingame():
 	db = mysql.connector.connect(host='tbi-inst1.cbas20bxl7ak.us-east-2.rds.amazonaws.com', user='root', password='password', database='tbidata') 
 	dbuser = username
 	dbcursor = db.cursor()
-	dbcursor.execute('SELECT COUNT(name) FROM tbidata.scores WHERE name = "' + dbuser + '";')
+	dbcursor.execute('SELECT COUNT(name) FROM tbidata.score WHERE name = "' + dbuser + '";')
 	exists = dbcursor.fetchone()
 
 	if exists[0] < 1:
-		dbcursor.execute('INSERT INTO tbidata.scores (name) VALUES ("' + dbuser + '");')
+		dbcursor.execute('INSERT INTO tbidata.score (name) VALUES ("' + dbuser + '");')
 		db.commit()
 	#end db
 
@@ -238,17 +238,17 @@ def vote():
 				won = 'The spy has lost! ' + games[game]['vote']['accuser'] + ' correctly guessed it was ' + games[game]['spy'] + "!"
 				#update accuser wins/spy losses
 				
-				dbcursor.execute('UPDATE tbidata.scores SET accusewins = accusewins + 1 WHERE name = "' + dbaccuser + '";')
+				dbcursor.execute('UPDATE tbidata.score SET accusewins = accusewins + 1 WHERE name = "' + dbaccuser + '";')
 				db.commit()
-				dbcursor.execute('UPDATE tbidata.scores SET spylosses = spylosses + 1 WHERE name = "' + dbspy + '";')
+				dbcursor.execute('UPDATE tbidata.score SET spylosses = spylosses + 1 WHERE name = "' + dbspy + '";')
 				db.commit()
 			else:
 				won = 'The spy has won! Everyone guessed ' + games[game]['vote']['accused'] + ', but it was actually ' + games[game]['spy'] + "!"
 
 				#update spy wins/accuser losses
-				dbcursor.execute('UPDATE tbidata.scores SET spywins = spywins + 1 WHERE name = "' + dbspy + '";')
+				dbcursor.execute('UPDATE tbidata.score SET spywins = spywins + 1 WHERE name = "' + dbspy + '";')
 				db.commit()
-				dbcursor.execute('UPDATE tbidata.scores SET accuselosses = accuselosses + 1 WHERE name = "' + dbaccuser + '";')
+				dbcursor.execute('UPDATE tbidata.score SET accuselosses = accuselosses + 1 WHERE name = "' + dbaccuser + '";')
 				db.commit()
 			pusher.trigger(game, 'vote-result', {'message': 'Vote was unanimously passed! ' + won})
 			games[game]['clock'] = False
@@ -282,11 +282,11 @@ def guess():
 		pusher.trigger(game, 'spy-reveal', {'message': message + ' correct! The Spy wins!'})
 
 		#update spy wins
-		dbcursor.execute('UPDATE tbidata.scores SET spywins = spywins + 1 WHERE name = "' + dbspy + '";')
+		dbcursor.execute('UPDATE tbidata.score SET spywins = spywins + 1 WHERE name = "' + dbspy + '";')
 		db.commit()
 	else:
 		#update spy losses
-		dbcursor.execute('UPDATE tbidata.scores SET spylosses = spylosses + 1 WHERE name = "' + dbspy + '";')
+		dbcursor.execute('UPDATE tbidata.score SET spylosses = spylosses + 1 WHERE name = "' + dbspy + '";')
 		db.commit()
 
 		pusher.trigger(game, 'spy-reveal', {'message': message + ' incorrect! The Spy loses!'})
@@ -304,20 +304,20 @@ def cleanupgame(game):
 	db = mysql.connector.connect(host='tbi-inst1.cbas20bxl7ak.us-east-2.rds.amazonaws.com', user='root', password='password', database='tbidata') 
 	dbcursor = db.cursor()
 	for dbuser in list(games[game]['players']):
-		dbcursor.execute('SELECT spywins FROM tbidata.scores WHERE name = "' + dbuser + '";')
+		dbcursor.execute('SELECT spywins FROM tbidata.score WHERE name = "' + dbuser + '";')
 		spywins = dbcursor.fetchone()[0]
 
-		dbcursor.execute('SELECT spylosses FROM tbidata.scores WHERE name = "' + dbuser + '";')
+		dbcursor.execute('SELECT spylosses FROM tbidata.score WHERE name = "' + dbuser + '";')
 		spylosses = dbcursor.fetchone()[0]
 
-		dbcursor.execute('SELECT accusewins FROM tbidata.scores WHERE name = "' + dbuser + '";')
+		dbcursor.execute('SELECT accusewins FROM tbidata.score WHERE name = "' + dbuser + '";')
 		accusewins = dbcursor.fetchone()[0]
 
-		dbcursor.execute('SELECT accuselosses FROM tbidata.scores WHERE name = "' + dbuser + '";')
+		dbcursor.execute('SELECT accuselosses FROM tbidata.score WHERE name = "' + dbuser + '";')
 		accuselosses = dbcursor.fetchone()[0]
 
 		totalscore = (spywins * 1000) + (spylosses * -500) + (accusewins * 500) + (accuselosses * -1000)
-		dbcursor.execute('UPDATE tbidata.scores SET totalscore = ' + str(totalscore) + ' WHERE name = "' + dbuser + '";')
+		dbcursor.execute('UPDATE tbidata.score SET totalscore = ' + str(totalscore) + ' WHERE name = "' + dbuser + '";')
 		db.commit()
 
 	time.sleep(1)
@@ -329,7 +329,7 @@ def statistics():
 	db = mysql.connector.connect(host='tbi-inst1.cbas20bxl7ak.us-east-2.rds.amazonaws.com', user='root', password='password', database='tbidata') 
 	dbcursor = db.cursor()
 
-	dbcursor.execute('SELECT name, totalscore, spywins, spylosses, accusewins, accuselosses FROM tbidata.scores ORDER BY totalscore DESC')
+	dbcursor.execute('SELECT name, totalscore, spywins, spylosses, accusewins, accuselosses FROM tbidata.score ORDER BY totalscore DESC')
 	userstats = dbcursor.fetchall()
 
 	rows = []
