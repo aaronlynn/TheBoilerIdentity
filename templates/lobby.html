@@ -23,17 +23,23 @@
       var channel = pusher.subscribe("{{ game_id }}");
 
       channel.bind('join-game', function eventHandler (data) {
-        const html = `<li class="list-group-item">${data.user}</li>`;
+        const html = `<li class="list-group-item" id="player-${data.user}">${data.user}</li>`;
         let list = document.querySelector("#players");
         list.innerHTML += html;
       });
 
       //check the html stuff here, not sure if correct
       channel.bind('leave-game', function eventHandler (data) {
-        const html = `<li class="list-group-item">${data.user}</li>`;
-        let list = document.querySelector("#players");
-        list.innerHTML -= html;
-        setTimeout(location.reload.bind(location), 1000);
+        const elem = document.querySelector(`#player-${data.user}`);
+        elem.parentNode.removeChild(elem);
+        if ("{{ player }}" == data.newhost) {
+          let but = document.querySelector("#startgame-button");
+          but.innerHTML = `<input class="btn btn-lg btn-block btn-outline-primary" type="submit" value="Start Game">`;
+          but = document.querySelector("#opt-spy");
+          but.innerHTML = `<input type="radio" value="spy" name="options" autocomplete="off" checked> Spyfall Locations`;
+          but = document.querySelector("#opt-pur");
+          but.innerHTML = `<input type="radio" value="spy" name="options" autocomplete="off" checked> Purdue Locations`;
+        }
       })
 
       channel.bind('start-game', function eventHandler (data) {
@@ -49,7 +55,7 @@
         <h3 class="card-title">Players</h3>
         <ul id="players" class="list-group list-group-flush">
           {% for player in game %}
-            <li class="list-group-item">{{ player }}</li>
+            <li class="list-group-item" id="player-{{ player }}">{{ player }}</li>
           {% endfor %}
         </ul>
       </div>
@@ -57,11 +63,13 @@
     <form id="home-signin" action="/startgame" method="get">
       <div class="form-row">
         <div class="form-group col-sm-6">
-          {% if is_owner %}
-            <input class="btn btn-lg btn-block btn-outline-primary" type="submit" value="Start Game">
-          {% else %}
-            <button type="button" class="btn btn-lg btn-block btn-outline-secondary" disabled>Start Game</button>
-          {% endif %}
+          <div id="startgame-button">
+            {% if is_owner %}
+              <input class="btn btn-lg btn-block btn-outline-primary" type="submit" value="Start Game">
+            {% else %}
+              <button type="button" class="btn btn-lg btn-block btn-outline-secondary" disabled>Start Game</button>
+            {% endif %}
+          </div>
         </div>
         <div class="form-group col-sm-6">
           <a class="btn btn-lg btn-block btn-outline-secondary" href="/leavegame?user={{ player }}&game={{ game_id }}" role="button">Back</a>
@@ -72,18 +80,18 @@
       <div class="btn-group btn-group-toggle" data-toggle="buttons">
         {% if is_owner %}
           <input type="hidden" name="game" value="{{ game_id }}">
-          <label class="btn btn-secondary active">
-            <input type="radio" value="spy" name="options" id="opt-spy" autocomplete="off" checked> Spyfall Locations
+          <label class="btn btn-secondary active" id="opt-spy">
+            <input type="radio" value="spy" name="options" autocomplete="off" checked> Spyfall Locations
           </label>
-          <label class="btn btn-secondary">
+          <label class="btn btn-secondary" id="opt-spy">
             <input type="radio" value="pur" name="options" id="opt-pur" autocomplete="off"> Purdue Locations
           </label>
 
         {% else %}
-          <label class="btn btn-secondary">
+          <label class="btn btn-secondary" id="opt-spy">
             <input type="radio" name="options" id="opt-spy" autocomplete="off" disabled> Spyfall Locations
           </label>
-          <label class="btn btn-secondary">
+          <label class="btn btn-secondary" id="opt-spy">
             <input type="radio" name="options" id="opt-pur" autocomplete="off" disabled> Purdue Locations
           </label>
         {% endif %}
