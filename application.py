@@ -215,6 +215,7 @@ def vote():
 	#get spy from db
 	db = mysql.connector.connect(host='tbi-inst1.cbas20bxl7ak.us-east-2.rds.amazonaws.com', user='root', password='password', database='tbidata') 
 	dbspy = games[game]['spy']
+	dbaccuser = games[game]['vote']['accuser']
 	dbcursor = db.cursor()
 
 	if games[game]['vote']['for'] + games[game]['vote']['against'] == len(games[game]['players']) - 1:
@@ -225,16 +226,19 @@ def vote():
 			won = ''
 			if games[game]['vote']['accused'] == games[game]['spy']:
 				won = 'The spy has lost! ' + games[game]['vote']['accuser'] + ' correctly guessed it was ' + games[game]['spy'] + "!"
-
-				#update accuser wins
-				dbaccuser = games[game]['vote']['accuser']
-				dbcursor.execute('UPDATE tbidata.scores SET accusewins = accusewins + 1 WHERE name = "' + dbaccuser + '";')
+				#update accuser wins/spy losses
+				
+				dbcursor.execute('UPDATE tbidata.scores SET accusewins = accusewins + 1 WHERE name = "' + dbaccuser + '";').
+				db.commit()
+				dbcursor.execute('UPDATE tbidata.scores SET spylosses = spylosses + 1 WHERE name = "' + dbspy + '";').
 				db.commit()
 			else:
 				won = 'The spy has won! Everyone guessed ' + games[game]['vote']['accused'] + ', but it was actually ' + games[game]['spy'] + "!"
 
-				#update spy wins
+				#update spy wins/accuser losses
 				dbcursor.execute('UPDATE tbidata.scores SET spywins = spywins + 1 WHERE name = "' + dbspy + '";')
+				db.commit()
+				dbcursor.execute('UPDATE tbidata.scores SET accuselosses = accuselosses + 1 WHERE name = "' + dbaccuser + '";')
 				db.commit()
 			pusher.trigger(game, 'vote-result', {'message': 'Vote was unanimously passed! ' + won})
 			games[game]['clock'] = False
@@ -286,19 +290,37 @@ def guess():
 def endgame():
 	game = request.args['game']
 	user = request.args['user']
+
+
+	db = mysql.connector.connect(host='tbi-inst1.cbas20bxl7ak.us-east-2.rds.amazonaws.com', user='root', password='password', database='tbidata') 
+	dbuser = user
+	dbcursor = db.cursor()
+
+	dbcursor.execute('SELECT spywins FROM tbidata.scores WHERE name = "' + dbuser + '";')
+	spywins = dbcursor.fetchone()[0]
+
+	dbcursor.execute('SELECT spylosses FROM tbidata.scores WHERE name = "' + dbuser + '";')
+	spylosses = dbcursor.fetchone()[0]
+
+	dbcursor.execute('SELECT accusewins FROM tbidata.scores WHERE name = "' + dbuser + '";')
+	accusewins = dbcursor.fetchone()[0]
+
+	dbcursor.execute('SELECT accuselosses FROM tbidata.scores WHERE name = "' + dbuser + '";')
+	accuselosses = dbcursor.fetchone()[0]
+
+	totalscore = (spywins * 1000) + (spylosses * -500) + (accusewins * 500) + (accuselosses * -1000)
+	dbcursor.execute('UPDATE tbidata.scores SET totalscore = ' + totalscore + ' WHERE name = "' + dbuser + '";')
+	db.commit()
+
 	return render_template('endgame.html', order=games[game]['order'], user=user, game_id=game, role=games[game]['players'][user], location=games[game]['location'])
 
 @application.route("/statistics")
 def statistics():
-	db = mysql.connector.connect(host="", user="", password="", database="")
-	cur = db.cursor()
-	cur.execute("select * from users where UserName = %s", (username,))
-
 	user = request.args['user']
-	spy_wins = "-/-"
-	non_spy_wins = "-/-"
-	game_count = 32
-	score = 2
+#	spy_wins = "-/-"
+#	non_spy_wins = "-/-"
+#	game_count = 32
+#	score = 2
 
 	return render_template('statistics.html', spy_wins=spy_wins, non_spy_wins=non_spy_wins, total_games=game_count, score=score)
 
