@@ -292,24 +292,23 @@ def endgame():
 
 def cleanupgame(game):
 	db = mysql.connector.connect(host='tbi-inst1.cbas20bxl7ak.us-east-2.rds.amazonaws.com', user='root', password='password', database='tbidata') 
-	dbuser = user
 	dbcursor = db.cursor()
+	for dbuser in list(games[game]['players']):
+		dbcursor.execute('SELECT spywins FROM tbidata.scores WHERE name = "' + dbuser + '";')
+		spywins = dbcursor.fetchone()[0]
 
-	dbcursor.execute('SELECT spywins FROM tbidata.scores WHERE name = "' + dbuser + '";')
-	spywins = dbcursor.fetchone()[0]
+		dbcursor.execute('SELECT spylosses FROM tbidata.scores WHERE name = "' + dbuser + '";')
+		spylosses = dbcursor.fetchone()[0]
 
-	dbcursor.execute('SELECT spylosses FROM tbidata.scores WHERE name = "' + dbuser + '";')
-	spylosses = dbcursor.fetchone()[0]
+		dbcursor.execute('SELECT accusewins FROM tbidata.scores WHERE name = "' + dbuser + '";')
+		accusewins = dbcursor.fetchone()[0]
 
-	dbcursor.execute('SELECT accusewins FROM tbidata.scores WHERE name = "' + dbuser + '";')
-	accusewins = dbcursor.fetchone()[0]
+		dbcursor.execute('SELECT accuselosses FROM tbidata.scores WHERE name = "' + dbuser + '";')
+		accuselosses = dbcursor.fetchone()[0]
 
-	dbcursor.execute('SELECT accuselosses FROM tbidata.scores WHERE name = "' + dbuser + '";')
-	accuselosses = dbcursor.fetchone()[0]
-
-	totalscore = (spywins * 1000) + (spylosses * -500) + (accusewins * 500) + (accuselosses * -1000)
-	dbcursor.execute('UPDATE tbidata.scores SET totalscore = ' + totalscore + ' WHERE name = "' + dbuser + '";')
-	db.commit()
+		totalscore = (spywins * 1000) + (spylosses * -500) + (accusewins * 500) + (accuselosses * -1000)
+		dbcursor.execute('UPDATE tbidata.scores SET totalscore = ' + str(totalscore) + ' WHERE name = "' + dbuser + '";')
+		db.commit()
 
 	time.sleep(1)
 	del games[game]
@@ -321,14 +320,6 @@ def statistics():
 #	non_spy_wins = "-/-"
 #	game_count = 32
 #	score = 2
+	rows = []
 
 	return render_template('statistics.html', rows=rows)
-
-@application.route("/pushertest/<name>")
-def pushertest(name):
-	pusher.trigger('my-channel', 'my-event', {'message': 'hello ' + name})
-	return "Pushed " + name
-
-@application.route("/pusherpage")
-def pusherpage():
-	return render_template("pushertest.html")
