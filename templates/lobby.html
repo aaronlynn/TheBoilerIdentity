@@ -54,11 +54,11 @@
         </ul>
       </div>
     </div>
-    <form>
+    <form id="home-signin" action="/startgame" method="get">
       <div class="form-row">
         <div class="form-group col-sm-6">
           {% if is_owner %}
-            <a role="button" class="btn btn-lg btn-block btn-outline-primary" href="/startgame?game={{ game_id }}">Start Game</a>
+            <input class="btn btn-lg btn-block btn-outline-primary" type="submit" value="Start Game">
           {% else %}
             <button type="button" class="btn btn-lg btn-block btn-outline-secondary" disabled>Start Game</button>
           {% endif %}
@@ -71,12 +71,12 @@
       <!-- TODO figure out how to set locations based on button clicks -->
       <div class="btn-group btn-group-toggle" data-toggle="buttons">
         {% if is_owner %}
-        
+          <input type="hidden" name="game" value="{{ game_id }}">
           <label class="btn btn-secondary active">
-            <input type="radio" name="options" id="opt-spy" autocomplete="off" checked> Spyfall Locations
+            <input type="radio" value="spy" name="options" id="opt-spy" autocomplete="off" checked> Spyfall Locations
           </label>
           <label class="btn btn-secondary">
-            <input type="radio" name="options" id="opt-pur" autocomplete="off"> Purdue Locations
+            <input type="radio" value="pur" name="options" id="opt-pur" autocomplete="off"> Purdue Locations
           </label>
 
         {% else %}
@@ -88,9 +88,8 @@
           </label>
         {% endif %}
       </div>
-
-</div>
     </form>
+</div>
 
     <!-- Optional JavaScript -->
     <script src="https://www.gstatic.com/firebasejs/5.6.0/firebase.js"></script>

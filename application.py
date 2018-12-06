@@ -155,13 +155,16 @@ def joingame():
 def initgame():
 	game = request.args['game']
 	userlist = list(games[game]['players'].keys())
-	#locationlist = request.args['loc']
-	if True:
+	locationlist = request.args['options']
+	if locationlist == 'spy':
+		games[game]['location_list'] = 'spy'
 		location = random.choice(list(locations))
+		rolelist = locations[location]
 	else:
+		games[game]['location_list'] = 'pur'
 		location = random.choice(list(purduelocations))
+		rolelist = purduelocations[location]
 
-	rolelist = locations[location]
 	spy = random.choice(list(userlist))
 	userlist.remove(spy)
 
@@ -185,8 +188,15 @@ def game():
 
 	game = request.args['game']
 	user = request.args['user']
+
+	locs = []
+	if games[game]['location_list'] == 'spy':
+		locs = locations
+	else:
+		locs = purduelocations
+	
 	if game in games:
-		return render_template('game.html', game=games[game], game_id=game, user=user, location=games[game]['location'], role=games[game]['players'][user], players=games[game]['players'], locations=list(locations))
+		return render_template('game.html', game=games[game], game_id=game, user=user, location=games[game]['location'], role=games[game]['players'][user], players=games[game]['players'], locations=list(locs))
 
 	return redirect(url_for('home'))
 
