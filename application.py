@@ -326,10 +326,15 @@ def cleanupgame(game):
 
 @application.route("/statistics")
 def statistics():
-#	spy_wins = "-/-"
-#	non_spy_wins = "-/-"
-#	game_count = 32
-#	score = 2
+	db = mysql.connector.connect(host='tbi-inst1.cbas20bxl7ak.us-east-2.rds.amazonaws.com', user='root', password='password', database='tbidata') 
+	dbcursor = db.cursor()
+
+	dbcursor.execute('SELECT name, totalscore, spywins, spylosses, accusewins, accuselosses FROM tbidata.scores ORDER BY totalscore DESC')
+	userstats = dbcursor.fetchall()
+
 	rows = []
+
+	for row in userstats:
+		rows.append(row)
 
 	return render_template('statistics.html', rows=rows)
