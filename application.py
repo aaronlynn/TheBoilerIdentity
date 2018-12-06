@@ -13,6 +13,7 @@ from purduelocations import *
 import sys
 import urllib
 from time import sleep
+import mysql.connector
 
 pusher = Pusher(
   app_id='662419',
@@ -76,11 +77,23 @@ def hello(name):
 
 @application.route("/newgame")
 def newgame():
+
 	if 'name' not in request.args or 'game' not in request.args:
 		return render_template('newgame.html', response='')
 	game = request.args['game']
 
 	#TODO handle if host or guest refreshes page. Currently recreates room with same room code but no players
+
+	#create user in database if one doesn't exist
+	db = mysql.connector.connect(host='tbi-inst1.cbas20bxl7ak.us-east-2.rds.amazonaws.com', user='root', password='password', database='tbidata') 
+	dbuser = request.args['name']
+	dbcursor = db.cursor()
+	dbcursor.execute('SELECT COUNT(name) FROM tbidata.scores WHERE name = "' + dbuser + '";')
+	exists = dbcursor.fetchone()
+
+	if exists[0] < 1:
+		dbcursor.execute('INSERT INTO tbidata.scores (name) VALUES ("' + dbuser + '");')
+		db.commit()
 
 	games[game] = {'players': {request.args['name']: ''}, 'owner': request.args['name'], 'has_accused': [], 'clock': True}
 	return render_template('lobby.html', player=request.args['name'], game_id=game, game=games[game]['players'], is_owner=True)
@@ -112,6 +125,18 @@ def joingame():
 
 	game = request.args['game'].upper();
 	username = urllib.parse.unquote(request.args['name'])
+
+	#create user in database if one doesn't exist
+	db = mysql.connector.connect(host='tbi-inst1.cbas20bxl7ak.us-east-2.rds.amazonaws.com', user='root', password='password', database='tbidata') 
+	dbuser = username
+	dbcursor = db.cursor()
+	dbcursor.execute('SELECT COUNT(name) FROM tbidata.scores WHERE name = "' + dbuser + '";')
+	exists = dbcursor.fetchone()
+
+	if exists[0] < 1:
+		dbcursor.execute('INSERT INTO tbidata.scores (name) VALUES ("' + dbuser + '");')
+		db.commit()
+	#end db
 
 	if game in games:
 		if username in games[game]['players']:
