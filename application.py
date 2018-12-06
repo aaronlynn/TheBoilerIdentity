@@ -233,6 +233,20 @@ def endgame():
 	user = request.args['user']
 	return render_template('endgame.html', order=games[game]['order'], user=user, game_id=game, role=games[game]['players'][user], location=games[game]['location'])
 
+@application.route("/statistics")
+def statistics():
+	db = mysql.connector.connect(host="", user="", password="", database="")
+	cur = db.cursor()
+	cur.execute("select * from users where UserName = %s", (username,))
+
+	user = request.args['user']
+	spy_wins = "-/-"
+	non_spy_wins = "-/-"
+	game_count = 32
+	score = 2
+
+	return render_template('statistics.html', spy_wins=spy_wins, non_spy_wins=non_spy_wins, total_games=game_count, score=score)
+
 @application.route("/pushertest/<name>")
 def pushertest(name):
 	pusher.trigger('my-channel', 'my-event', {'message': 'hello ' + name})
