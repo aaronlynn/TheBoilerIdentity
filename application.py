@@ -71,10 +71,6 @@ def home():
 			return redirect('/joingame?name=' + request.args['name'])
 	return render_template('index.html')
 
-@application.route("/hello/<name>")
-def hello(name):
-	return render_template('hello.html', name=name)
-
 @application.route("/newgame")
 def newgame():
 
@@ -107,6 +103,19 @@ def lobby():
 def leavegame():
 	game = request.args['game']
 	username = request.args['user']
+
+	if game not in games:
+		return redirect(url_for('home'))
+
+	if len(list(games[game]['players'])) == 1:
+		del games[game]
+		return redirect(url_for('home'))
+
+	if username == games[game]['owner']:
+		del games[game]['players'][username]
+		newhost = random.choice(list(games[game]['players']))
+		games[game]['owner'] = newhost
+		pusher.trigger(game, 'leave-game', {'user': username, 'newhost': newhost})
 
 	if username in games[game]['players']:
 		del games[game]['players'][username]
