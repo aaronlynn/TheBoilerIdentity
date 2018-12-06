@@ -245,7 +245,7 @@ def statistics():
 	game_count = 32
 	score = 2
 
-	return render_template('statistics.html', spy_wins=spy_wins, non_spy_wins=non_spy_wins, total_games=game_count, score=score)
+	return render_template('statistics.html', spy_wins=spy_wins, non_spy_wins=non_spy_wins, total_games=game_count, score=score, user=user)
 
 @application.route("/pushertest/<name>")
 def pushertest(name):
