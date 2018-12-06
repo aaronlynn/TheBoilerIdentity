@@ -188,7 +188,7 @@ def initgame():
 		games[game]['players'][user] = role
 
 	pusher.trigger(game, 'start-game', {})
-	startClock(game, minutes=.5)
+	startClock(game, minutes=8)
 
 @application.route("/game")
 def game():
