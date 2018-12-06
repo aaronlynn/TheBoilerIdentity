@@ -94,6 +94,7 @@ def newgame():
 	if exists[0] < 1:
 		dbcursor.execute('INSERT INTO tbidata.scores (name) VALUES ("' + dbuser + '");')
 		db.commit()
+	#end db
 
 	games[game] = {'players': {request.args['name']: ''}, 'owner': request.args['name'], 'has_accused': [], 'clock': True}
 	return render_template('lobby.html', player=request.args['name'], game_id=game, game=games[game]['players'], is_owner=True)
@@ -210,6 +211,12 @@ def vote():
 	game = request.args['game']
 	persuasion = request.args['persuasion'] # one of two values 'for' or 'against'
 	games[game]['vote'][persuasion] += 1 	# add the vote to the current vote in the game
+
+	#get spy from db
+	db = mysql.connector.connect(host='tbi-inst1.cbas20bxl7ak.us-east-2.rds.amazonaws.com', user='root', password='password', database='tbidata') 
+	dbspy = games[game]['spy']
+	dbcursor = db.cursor()
+
 	if games[game]['vote']['for'] + games[game]['vote']['against'] == len(games[game]['players']) - 1:
 		# vote is done!
 		if games[game]['vote']['for'] == len(games[game]['players']) - 1:
@@ -220,6 +227,10 @@ def vote():
 				won = 'The spy has lost! ' + games[game]['vote']['accuser'] + ' correctly guessed it was ' + games[game]['spy'] + "!"
 			else:
 				won = 'The spy has won! Everyone guessed ' + games[game]['vote']['accused'] + ', but it was actually ' + games[game]['spy'] + "!"
+
+				#update spy wins
+				dbcursor.execute('UPDATE tbidata.scores SET spywins = spywins + 1 WHERE name = "' + dbspy + '";')
+				db.commit()
 			pusher.trigger(game, 'vote-result', {'message': 'Vote was unanimously passed! ' + won})
 			games[game]['clock'] = False
 			time.sleep(1)
@@ -242,9 +253,19 @@ def guess():
 	game = request.args['game']
 	location = request.args['location']
 	games[game]['clock'] = False
+
+	#get user from db
+	db = mysql.connector.connect(host='tbi-inst1.cbas20bxl7ak.us-east-2.rds.amazonaws.com', user='root', password='password', database='tbidata') 
+	dbspy = games[game]['spy']
+	dbcursor = db.cursor()
+
 	message = 'The Spy, ' + games[game]['spy'] + ', guessed the location was ' + location + ' and they were'
 	if location == games[game]['location']:
 		pusher.trigger(game, 'spy-reveal', {'message': message + ' correct! The Spy wins!'})
+
+		#update spy wins
+		dbcursor.execute('UPDATE tbidata.scores SET spywins = spywins + 1 WHERE name = "' + dbspy + '";')
+		db.commit()
 	else:
 		pusher.trigger(game, 'spy-reveal', {'message': message + ' incorrect! The Spy loses!'})
 	time.sleep(1)
