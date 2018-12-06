@@ -338,7 +338,14 @@ def statistics():
 	db = mysql.connector.connect(host='tbi-inst1.cbas20bxl7ak.us-east-2.rds.amazonaws.com', user='root', password='password', database='tbidata') 
 	dbcursor = db.cursor()
 
-	dbcursor.execute('SELECT name, totalscore, spywins, spylosses, accusewins, accuselosses FROM tbidata.score ORDER BY totalscore DESC')
+	getscores = '''SELECT name, totalscore, spywins, spylosses, accusewins, accuselosses 
+				FROM tbidata.score
+				WHERE spywins != 0 OR spylosses != 0 
+					OR accusewins != 0 OR accuselosses != 0 
+					OR totalscore != 0
+				ORDER BY totalscore DESC'''
+
+	dbcursor.execute(getscores)
 	userstats = dbcursor.fetchall()
 
 	rows = []
